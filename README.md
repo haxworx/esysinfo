@@ -1,2 +1,2 @@
 # esysinfo
-System Informaiton
+System Information (EFL)
