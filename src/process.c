@@ -3,11 +3,13 @@
 #endif
 
 #if defined(__MacOS__) || defined(__FreeBSD__) || defined(__DragonFly__)
-# include <pwd.h>
 # include <sys/types.h>
 # include <sys/sysctl.h>
 # include <sys/user.h>
 # include <sys/proc.h>
+#endif
+
+#if defined(__MacOS__)
 # include <libproc.h>
 # include <sys/proc_info.h>
 #endif
@@ -25,6 +27,41 @@
 
 static Eina_List *_process_list_freebsd_get(void);
 static Eina_List *_process_list_macos_get(void);
+
+static const char *
+_process_state_name(char state)
+{
+   const char *statename = NULL;
+
+   switch (state)
+     {
+        case SIDL:
+           statename = "IDLE";
+        break;
+
+        case SRUN:
+           statename = "RUN";
+        break;
+
+        case SSLEEP:
+          statename = "SLEEP";
+        break;
+
+        case SSTOP:
+          statename = "STOP";
+        break;
+
+        case SWAIT:
+          statename = "WAIT";
+        break;
+
+        case SLOCK:
+           statename = "LOCK";
+        break;
+     }
+
+   return statename;
+}
 
 Eina_List *
 process_list_get(void)
@@ -67,19 +104,14 @@ _process_list_macos_get(void)
         if (size != sizeof(task)) continue;
 
         Process_Info *p = calloc(1, sizeof(Process_Info));
+
         p->pid = kp.kp_proc.p_pid;
         p->uid = kp.kp_eproc.e_ucred.cr_uid;
         p->cpu_id = -1;
 
-        struct passwd *pwent;
-        if ((pwent = getpwuid(p->uid)))
-          {
-             p->login = strdup(pwent->pw_name);
-          }
-
         p->command = strdup(kp.kp_proc.p_comm);
         p->cpu_time = task.pti_total_user + task.pti_total_system;
-        p->state = kp.kp_proc.p_stat;
+        p->state = _process_state_name(kp.kp_proc.p_stat);
         p->mem_size = task.pti_virtual_size;
         p->mem_rss = task.pti_resident_size;
 
@@ -126,10 +158,9 @@ _process_list_freebsd_get(void)
         struct rusage usage = kp.ki_rusage;
 
         p->cpu_time = (usage.ru_utime.tv_sec * 1000000) + usage.ru_utime.tv_usec + (usage.ru_stime.tv_sec * 1000000) + usage.ru_stime.tv_usec; 
-        p->state = kp.ki_stat;
+        p->state = _process_state_name(kp.ki_stat);
         p->mem_size = kp.ki_size;
         p->mem_rss = kp.ki_rssize * page_size;
-        p->login = strdup(kp.ki_login);
 
         list = eina_list_append(list, p);
      }
