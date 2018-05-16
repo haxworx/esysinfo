@@ -26,7 +26,7 @@ int main(void)
                proc->mem_size >> 10, proc->mem_rss >> 10, proc->state);
      }
 
-   printf("nCPU: %d CPU: %.02f%% Mem %ld and %ld\n", cpu_count, cpu_usage, memory_total, memory_used);
+   printf("nCPU: %d CPU: %.02f%% Mem %ld/%ldM\n", cpu_count, cpu_usage, memory_used >> 10, memory_total >> 10);
 
    EINA_LIST_FREE(processes, proc)
      {
