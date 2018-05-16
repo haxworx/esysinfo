@@ -17,7 +17,8 @@ int main(void)
    processes = process_list_get();
    EINA_LIST_FOREACH(processes, l, proc)
      {
-        printf("it is %s\n", proc->command);
+        if (proc->login) printf("%s ", proc->login);
+        printf("it is %s \n", proc->command);
      }
 
    printf("nCPU: %d CPU: %.02f%% Mem %ld and %ld\n", cpu_count, cpu_usage, memory_total, memory_used);
@@ -25,7 +26,8 @@ int main(void)
    EINA_LIST_FREE(processes, proc)
      {
         free(proc->command);
-        free(proc->login);
+        if (proc->login)
+          free(proc->login);
      }
 
    eina_list_free(processes);

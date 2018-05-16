@@ -12,6 +12,7 @@ typedef enum
 typedef struct Process_Info
 {
    pid_t   pid;
+   int     uid;
    char   *command;
    int     cpu_id;
    long    cpu_time;
