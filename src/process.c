@@ -50,13 +50,17 @@ _process_state_name(char state)
         case SSTOP:
           statename = "STOP";
         break;
-
+#if !defined(__MacOS__)
         case SWAIT:
           statename = "WAIT";
         break;
 
         case SLOCK:
            statename = "LOCK";
+        break;
+#endif
+        case SZOMB:
+          statename = "ZOMB";
         break;
      }
 
