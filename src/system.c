@@ -51,14 +51,12 @@
 # include <mach/mach_init.h>
 # include <mach/mach_host.h>
 # include <net/if_mib.h>
-# include <AudioToolBox/AudioServices.h>
 #endif
 
 #if defined(__OpenBSD__) || defined(__NetBSD__)
 # include <sys/swap.h>
 # include <sys/mount.h>
 # include <sys/sensors.h>
-# include <sys/audioio.h>
 # include <net/if_types.h>
 # include <ifaddrs.h>
 #endif
@@ -66,15 +64,6 @@
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <net/if_mib.h>
 # include <vm/vm_param.h>
-# include <sys/soundcard.h>
-#endif
-
-#if defined(__linux__)
-# include <sys/soundcard.h>
-#endif
-
-#if defined(__linux__) && defined(HAVE_ALSA)
-# include <alsa/asoundlib.h>
 #endif
 
 #define CPU_STATES        5
@@ -126,13 +115,6 @@ typedef struct
    int     ac_mibs[5];
 } power_t;
 
-typedef struct
-{
-   bool    enabled;
-   uint8_t volume_left;
-   uint8_t volume_right;
-} mixer_t;
-
 typedef struct results_t results_t;
 struct results_t
 {
@@ -142,8 +124,6 @@ struct results_t
    meminfo_t     memory;
 
    power_t       power;
-
-   mixer_t       mixer;
 
    unsigned long incoming;
    unsigned long outgoing;
@@ -714,151 +694,6 @@ swap_out:
         memory->swap_used = xsu.xsu_used;
      }
 #endif
-}
-
-static int
-_mixer_master_volume_get(mixer_t *mixer)
-{
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-   int i, fd, devn;
-   char name[64];
-   mixer_devinfo_t dinfo;
-   mixer_ctrl_t *values = NULL;
-   mixer_devinfo_t *info = NULL;
-
-   fd = open("/dev/mixer", O_RDONLY);
-   if (fd < 0)
-     return 0;
-
-   for (devn = 0;; devn++) {
-        dinfo.index = devn;
-        if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo))
-          break;
-     }
-
-   info = calloc(devn, sizeof(*info));
-   if (!info)
-     return 0;
-
-   for (i = 0; i < devn; i++) {
-        info[i].index = i;
-        if (ioctl(fd, AUDIO_MIXER_DEVINFO, &info[i]) == -1)
-          {
-             --devn;
-             --i;
-             mixer->enabled = true;
-             continue;
-          }
-     }
-
-   values = calloc(devn, sizeof(*values));
-   if (!values)
-     return 0;
-
-   for (i = 0; i < devn; i++) {
-        values[i].dev = i;
-        values[i].type = info[i].type;
-        if (info[i].type != AUDIO_MIXER_CLASS)
-          {
-             values[i].un.value.num_channels = 2;
-             if (ioctl(fd, AUDIO_MIXER_READ, &values[i]) == -1)
-               {
-                  values[i].un.value.num_channels = 1;
-                  if (ioctl(fd, AUDIO_MIXER_READ, &values[i])
-                      == -1)
-                    return 0;
-               }
-          }
-     }
-
-   for (i = 0; i < devn; i++) {
-        strlcpy(name, info[i].label.name, sizeof(name));
-        if (!strcmp("master", name))
-          {
-             mixer->volume_left = values[i].un.value.level[0];
-             mixer->volume_right = values[i].un.value.level[1];
-             mixer->enabled = true;
-             break;
-          }
-     }
-
-   close(fd);
-
-   if (values)
-     free(values);
-   if (info)
-     free(info);
-
-#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__linux__) && !defined(HAVE_ALSA)
-   int bar;
-   int fd = open("/dev/mixer", O_RDONLY);
-   if (fd == -1)
-     return 0;
-
-   if ((ioctl(fd, MIXER_READ(0), &bar)) == -1)
-     {
-        return 0;
-     }
-
-   mixer->enabled = true;
-   mixer->volume_left = bar & 0x7f;
-   mixer->volume_right = (bar >> 8) & 0x7f;
-   close(fd);
-#elif defined(__linux__) && defined(HAVE_ALSA)
-   snd_mixer_t *h;
-   snd_mixer_elem_t *elem;
-   snd_mixer_selem_id_t *id;
-   long int value;
-   double volume;
-
-   snd_mixer_selem_id_alloca(&id);
-   snd_mixer_selem_id_set_index(id, 0);
-   snd_mixer_selem_id_set_name(id, "Master");
-
-   if ((snd_mixer_open(&h, 0)) == -1) return (0);
-   if ((snd_mixer_attach(h, "default")) == -1) return(0);
-   if ((snd_mixer_selem_register(h, NULL, NULL)) == -1) goto out;
-   if ((snd_mixer_load(h)) == -1) goto out;
-
-   if (!(elem = snd_mixer_find_selem(h, id))) goto out;
-
-   long int max, min;
-
-   snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-   snd_mixer_selem_get_playback_volume(elem, 0, &value);
-   double ratio = max - min / 100;
-   volume = value / ratio;
-
-   mixer->enabled = true;
-   mixer->volume_left = mixer->volume_right = volume * 100;
-out:
-   snd_mixer_close(h);
-#elif defined(__MacOS__)
-   AudioDeviceID id;
-   AudioObjectPropertyAddress prop;
-   float volume;
-   unsigned int id_size = sizeof(id);
-   unsigned int vol_size = sizeof(volume);
-
-   prop.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-   prop.mScope = kAudioObjectPropertyScopeGlobal;
-   prop.mElement = kAudioObjectPropertyElementMaster;
-
-   if (AudioHardwareServiceGetPropertyData(kAudioObjectSystemObject, &prop, 0, NULL, &id_size, &id))
-     return (0);
-
-   prop.mSelector = kAudioDevicePropertyVolumeScalar;
-   prop.mScope = kAudioDevicePropertyScopeOutput;
-   prop.mElement = 0;
-
-   if (AudioHardwareServiceGetPropertyData(id, &prop, 0, NULL, &vol_size, &volume))
-     return (0);
-
-   mixer->volume_left = mixer->volume_right = volume * 100;
-
-   mixer->enabled = true;
-#endif
-   return mixer->enabled;
 }
 
 static void
