@@ -15,6 +15,8 @@
 #endif
 
 #include <Eina.h>
+#include <Ecore.h>
+#include <Ecore_File.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -25,6 +27,7 @@
 # define PID_MAX 99999
 #endif
 
+static Eina_List *_process_list_linux_get(void);
 static Eina_List *_process_list_freebsd_get(void);
 static Eina_List *_process_list_macos_get(void);
 
@@ -32,7 +35,7 @@ static const char *
 _process_state_name(char state)
 {
    const char *statename = NULL;
-
+#if !defined(__linux__)
    switch (state)
      {
         case SIDL:
@@ -63,7 +66,7 @@ _process_state_name(char state)
           statename = "ZOMB";
         break;
      }
-
+#endif
    return statename;
 }
 
@@ -72,7 +75,9 @@ process_list_get(void)
 {
    Eina_List *processes;
 
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__linux__)
+   processes = _process_list_linux_get();
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
    processes = _process_list_freebsd_get();
 #elif defined(__MacOS__)
    processes = _process_list_macos_get();
@@ -82,6 +87,39 @@ process_list_get(void)
 
    return processes;
 }
+
+#if defined(__linux__)
+static Eina_List *
+_process_list_linux_get(void)
+{
+   const char *name;
+   Eina_List *files, *l, *list = NULL;
+   FILE *f;
+   char path[PATH_MAX], buf[4096];
+   int pid;
+
+   files = ecore_file_ls("/proc");
+   EINA_LIST_FOREACH(files, l, name)
+     {
+        pid = atoi(name);
+        if (!pid) continue;
+        snprintf(path, sizeof(path), "/proc/%d/stat", pid);
+        f = fopen(path, "r");
+        if (!f) continue;
+        if (fgets(buf, sizeof(buf), f))
+          {
+             printf("buf: %s\n", buf);
+          }
+
+        fclose(f);
+     }
+
+   if (files)
+     eina_list_free(files);
+
+   return list;
+}
+#endif
 
 #if defined(__MacOS__)
 static Eina_List *
