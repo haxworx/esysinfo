@@ -136,25 +136,29 @@ _parse_line(const char *line)
 static Eina_List *
 _process_list_linux_get(void)
 {
-   const char *name;
+   char *name;
    Eina_List *files, *l, *list = NULL;
    FILE *f;
    char path[PATH_MAX], line[4096];
    int pid;
+
+   int pagesize = getpagesize();
 
    files = ecore_file_ls("/proc");
    EINA_LIST_FOREACH(files, l, name)
      {
         char state, program_name[1024];
         int res, utime, stime, cutime, cstime;
-        int uid, mem_size, mem_rss;
+        int uid, psr, mem_size, mem_rss, mem_shared;
 
         pid = atoi(name);
         if (!pid) continue;
 
         snprintf(path, sizeof(path), "/proc/%d/stat", pid);
+
         f = fopen(path, "r");
         if (!f) continue;
+
         if (fgets(line, sizeof(line), f))
           {
              int dummy;
@@ -163,19 +167,20 @@ _process_list_linux_get(void)
              strncpy(program_name, start, end - start);
              program_name[end - start] = '\0';
 
-             res = sscanf (end + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u",
-                     &state, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &utime, &stime, &cutime, &cstime,
-                     &dummy, &dummy, &dummy, &dummy, &dummy, &mem_size, &mem_rss, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy,
-                     &dummy, &dummy, &dummy);
+             res = sscanf (end + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u %d %d %d %d %d %d %d %d %d",
+                           &state, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &utime, &stime, &cutime, &cstime,
+                           &dummy, &dummy, &dummy, &dummy, &dummy, &mem_size, &mem_rss, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy,
+                           &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &psr, &dummy, &dummy, &dummy, &dummy, &dummy);
           }
-
         fclose(f);
 
-        if (res != 33) continue;
+        if (res != 42) continue;
 
         snprintf(path, sizeof(path), "/proc/%d/status", pid);
+
         f = fopen(path, "r");
         if (!f) continue;
+
         while ((fgets(line, sizeof(line), f)) != NULL)
           {
              if (!strncmp(line, "Uid:", 4))
@@ -190,14 +195,19 @@ _process_list_linux_get(void)
 
         p->pid = pid;
         p->uid = uid;
-        p->cpu_id = -1;
+        p->cpu_id = psr;
         p->command = strdup(program_name);
         p->state = _process_state_name(state);
-        p->cpu_time = utime + stime + cutime + cstime;
+        p->cpu_time = utime + stime;
         p->mem_size = mem_size;
-        p->mem_rss = mem_rss;
+        p->mem_rss = mem_rss * pagesize;
 
         list = eina_list_append(list, p);
+     }
+
+   EINA_LIST_FREE(files, name)
+     {
+        free(name);
      }
 
    if (files)
@@ -259,7 +269,7 @@ _process_list_freebsd_get(void)
    struct kinfo_proc kp;
    int mib[6];
    size_t len;
-   int page_size = getpagesize();
+   int pagesize = getpagesize();
 
    len = sizeof(int);
    if (sysctlnametomib("kern.proc.pid", mib, &len) == -1)
@@ -288,7 +298,7 @@ _process_list_freebsd_get(void)
         p->cpu_time = (usage.ru_utime.tv_sec * 1000000) + usage.ru_utime.tv_usec + (usage.ru_stime.tv_sec * 1000000) + usage.ru_stime.tv_usec; 
         p->state = _process_state_name(kp.ki_stat);
         p->mem_size = kp.ki_size;
-        p->mem_rss = kp.ki_rssize * page_size;
+        p->mem_rss = kp.ki_rssize * pagesize;
 
         list = eina_list_append(list, p);
      }
