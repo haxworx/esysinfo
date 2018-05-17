@@ -1,7 +1,6 @@
 #include "system.h"
 #include "process.h"
 #include <stdio.h>
-#include <pwd.h>
 
 int main(void)
 {
@@ -18,11 +17,8 @@ int main(void)
    processes = process_list_get();
    EINA_LIST_FOREACH(processes, l, proc)
      {
-        printf("PID: %d ", proc->pid);
-        struct passwd *pwent = getpwuid(proc->uid);
-        if (pwent)
-          printf("USER: %s ", pwent->pw_name);
-        printf("UID: %d CPU: %d COMMAND: %s SIZE: %ldK RES: %ldK STATE: %s\n", proc->uid, proc->cpu_id, proc->command,
+        printf("PID: %d UID: %d CPU: %d COMMAND: %s SIZE: %ldK RES: %ldK STATE: %s\n",
+               proc->pid, proc->uid, proc->cpu_id, proc->command,
                proc->mem_size >> 10, proc->mem_rss >> 10, proc->state);
      }
 
@@ -31,9 +27,12 @@ int main(void)
    EINA_LIST_FREE(processes, proc)
      {
         free(proc->command);
+        free(proc);
      }
 
    eina_list_free(processes);
 
    eina_shutdown();
+
+   return 0;
 }
