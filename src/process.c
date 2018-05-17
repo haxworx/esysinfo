@@ -19,6 +19,7 @@
 #include <Ecore_File.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <unistd.h>
 
 #include "process.h"
@@ -35,7 +36,36 @@ static const char *
 _process_state_name(char state)
 {
    const char *statename = NULL;
-#if !defined(__linux__)
+#if defined(__linux__)
+
+   switch (state)
+     {
+        case 'D':
+          statename = "USLEEP";
+        break;
+
+        case 'I':
+          statename = "IDLE";
+        break;
+
+        case 'R':
+          statename = "RUN";
+        break;
+
+        case 'S':
+          statename = "SLEEP";
+        break;
+
+        case 'T':
+        case 't':
+          statename = "STOP";
+        break;
+
+        case 'Z':
+          statename = "ZOMB";
+        break;
+     }
+#else
    switch (state)
      {
         case SIDL:
@@ -89,29 +119,85 @@ process_list_get(void)
 }
 
 #if defined(__linux__)
+
+static unsigned long
+_parse_line(const char *line)
+{
+   char *p, *tok;
+
+   p = strchr(line, ':') + 1;
+   while (isspace(*p))
+     p++;
+   tok = strtok(p, " ");
+
+   return atol(tok);
+}
+
 static Eina_List *
 _process_list_linux_get(void)
 {
    const char *name;
    Eina_List *files, *l, *list = NULL;
    FILE *f;
-   char path[PATH_MAX], buf[4096];
+   char path[PATH_MAX], line[4096];
    int pid;
 
    files = ecore_file_ls("/proc");
    EINA_LIST_FOREACH(files, l, name)
      {
+        char state, program_name[1024];
+        int res, utime, stime, cutime, cstime;
+        int uid, mem_size, mem_rss;
+
         pid = atoi(name);
         if (!pid) continue;
+
         snprintf(path, sizeof(path), "/proc/%d/stat", pid);
         f = fopen(path, "r");
         if (!f) continue;
-        if (fgets(buf, sizeof(buf), f))
+        if (fgets(line, sizeof(line), f))
           {
-             printf("buf: %s\n", buf);
+             int dummy;
+             char *end, *start = strchr(line, '(') + 1;
+             end = strchr(line, ')');
+             strncpy(program_name, start, end - start);
+             program_name[end - start] = '\0';
+
+             res = sscanf (end + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u",
+                     &state, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &utime, &stime, &cutime, &cstime,
+                     &dummy, &dummy, &dummy, &dummy, &dummy, &mem_size, &mem_rss, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy,
+                     &dummy, &dummy, &dummy);
           }
 
         fclose(f);
+
+        if (res != 33) continue;
+
+        snprintf(path, sizeof(path), "/proc/%d/status", pid);
+        f = fopen(path, "r");
+        if (!f) continue;
+        while ((fgets(line, sizeof(line), f)) != NULL)
+          {
+             if (!strncmp(line, "Uid:", 4))
+               {
+                   uid = _parse_line(line);
+                   break;
+               }
+          }
+        fclose(f);
+
+        Process_Info *p = calloc(1, sizeof(Process_Info));
+
+        p->pid = pid;
+        p->uid = uid;
+        p->cpu_id = -1;
+        p->command = strdup(program_name);
+        p->state = _process_state_name(state);
+        p->cpu_time = utime + stime + cutime + cstime;
+        p->mem_size = mem_size;
+        p->mem_rss = mem_rss;
+
+        list = eina_list_append(list, p);
      }
 
    if (files)
