@@ -1,6 +1,6 @@
 TARGET = ../esysinfo
 
-OBJECTS = system.o process.o main.o
+OBJECTS = system.o process.o ui.o main.o
 
 default: $(TARGET)
 
@@ -15,6 +15,9 @@ system.o: system.c
 
 process.o: process.c
 	$(CC) -c $(CFLAGS) $(shell pkg-config --cflags $(PKGS)) process.c -o $@
+
+ui.o: ui.c
+	$(CC) -c $(CFLAGS) $(shell pkg-config --cflags $(PKGS)) ui.c -o $@
 
 clean:
 	-rm $(OBJECTS)

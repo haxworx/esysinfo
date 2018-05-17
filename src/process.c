@@ -300,6 +300,7 @@ _process_list_freebsd_get(void)
         struct rusage usage = kp.ki_rusage;
 
         p->cpu_time = (usage.ru_utime.tv_sec * 1000000) + usage.ru_utime.tv_usec + (usage.ru_stime.tv_sec * 1000000) + usage.ru_stime.tv_usec; 
+        p->cpu_time /= 10000;
         p->state = _process_state_name(kp.ki_stat);
         p->mem_size = kp.ki_size;
         p->mem_rss = kp.ki_rssize * pagesize;

@@ -10,6 +10,7 @@ typedef struct Process_Info
    char       *command;
    int         cpu_id;
    long        cpu_time;
+   float       cpu_usage;
    const char *state;
    unsigned long long        mem_size;
    unsigned long long        mem_rss;
