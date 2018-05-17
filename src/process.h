@@ -11,8 +11,8 @@ typedef struct Process_Info
    int         cpu_id;
    long        cpu_time;
    const char *state;
-   long        mem_size;
-   long        mem_rss;
+   unsigned long long        mem_size;
+   unsigned long long        mem_rss;
 } Process_Info;
 
 Eina_List *

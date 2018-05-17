@@ -149,8 +149,8 @@ _process_list_linux_get(void)
      {
         char state, program_name[1024];
         int res, utime, stime, cutime, cstime;
-        int uid, psr, mem_size, mem_rss, mem_shared;
-
+        int uid, psr;
+        unsigned int mem_size, mem_rss;
         pid = atoi(name);
         if (!pid) continue;
 
