@@ -1,7 +1,9 @@
 #ifndef __UI_H__
 #define __UI_H__
 
-void
-stats_poll(void);
+#include <Elementary.h>
+
+Evas_Object *
+ui_add(Evas_Object *win);
 
 #endif
