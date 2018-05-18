@@ -17,6 +17,9 @@ typedef struct Results
    Eina_List *process_list;
 } Results;
 
+static long mem_total = 0;
+static long mem_used = 0;
+
 void stats_poll(Ecore_Thread *thread)
 {
    Eina_List *list_prev, *processes, *l, *l2;
@@ -52,8 +55,8 @@ void stats_poll(Ecore_Thread *thread)
 
         Results *results = malloc(sizeof(Results));
         results->cpu_usage = cpu_usage;
-        results->mem_total = memory_total >> 10;
-        results->mem_used  = memory_used >> 10;
+        results->mem_total = mem_total = memory_total >> 10;
+        results->mem_used = mem_used = memory_used >> 10;
         results->process_list = processes;
 
         ecore_thread_feedback(thread, results);
@@ -90,7 +93,9 @@ _thread_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 
    eina_list_free(results->process_list);
 
-   printf("it is %f and %ld and %ld\n", results->cpu_usage, results->mem_total, results->mem_used);
+   elm_progressbar_value_set(ui->progress_cpu, (double) results->cpu_usage / 100);
+   elm_progressbar_value_set(ui->progress_mem, (double) ((results->mem_total / 100.0) * results->mem_used) / 1000000);
+
    free(results);
 }
 
@@ -112,13 +117,31 @@ _thread_error_cb(void *data EINA_UNUSED, Ecore_Thread *thread)
    thread = NULL;
 }
 
+static char *
+_progress_mem_format_cb(double val)
+{
+  char buf[1024];
+
+  snprintf(buf, sizeof(buf), "%ld M out of %ld M", mem_used, mem_total);
+
+  return strdup(buf);
+}
+
+static void
+_progress_mem_format_free_cb(char *str)
+{
+   if (str)
+     free(str);
+}
+
 Evas_Object *ui_add(Evas_Object *parent)
 {
    Evas_Object *box, *hbox, *frame;
    Evas_Object *progress_cpu, *progress_mem;
    Ecore_Thread *thread;
+   Ui *ui;
 
-   Ui *ui = calloc(1, sizeof(ui));
+   ui = calloc(1, sizeof(ui));
 
    thread = ecore_thread_feedback_run(_thread_run_cb, _thread_feedback_cb, _thread_end_cb, _thread_error_cb,
                                       ui, EINA_FALSE);
@@ -141,6 +164,7 @@ Evas_Object *ui_add(Evas_Object *parent)
    frame = elm_frame_add(hbox);
    evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(frame, "System CPU");
    elm_box_pack_end(hbox, frame);
    evas_object_show(frame);
 
@@ -155,7 +179,7 @@ Evas_Object *ui_add(Evas_Object *parent)
    frame = elm_frame_add(hbox);
    evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_object_text_set(frame, "mem");
+   elm_object_text_set(frame, "System Memory");
    elm_box_pack_end(hbox, frame);
    evas_object_show(frame);
 
@@ -163,7 +187,7 @@ Evas_Object *ui_add(Evas_Object *parent)
    evas_object_size_hint_align_set(progress_mem, EVAS_HINT_FILL, EVAS_HINT_FILL);
    evas_object_size_hint_weight_set(progress_mem, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    elm_progressbar_span_size_set(progress_mem, 1.0);
-   elm_progressbar_unit_format_set(progress_mem, "%d");
+   elm_progressbar_unit_format_function_set(progress_mem, _progress_mem_format_cb, _progress_mem_format_free_cb);
    elm_object_content_set(frame, progress_mem);
    evas_object_show(progress_mem);
 
