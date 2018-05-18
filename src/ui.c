@@ -7,7 +7,7 @@ typedef struct Ui
 {
    Evas_Object *progress_cpu;
    Evas_Object *progress_mem;
-   Evas_Object *list;
+   Evas_Object *table;
 } Ui;
 
 typedef struct Sys_Info
@@ -20,119 +20,18 @@ typedef struct Sys_Info
 static long _memory_total = 0;
 static long _memory_used = 0;
 
-static void
-_list_content_del(void *data, Evas_Object *obj EINA_UNUSED)
-{
-   Process_Info *proc = data;
-
-   free(proc->command);
-   free(proc);
-}
-
-static Evas_Object *
-_label_get(Evas_Object *parent, const char *fmt, ...)
-{
-   char text[1024];
-   va_list ap;
-
-   va_start(ap, fmt);
-   vsnprintf(text, sizeof(text), fmt, ap);
-   va_end(ap);
-
-   Evas_Object *label = elm_label_add(parent);
-   evas_object_size_hint_weight_set(label, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   evas_object_size_hint_align_set(label, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_object_text_set(label, text);
-   evas_object_show(label);
-
-   return label;
-}
-
-static Evas_Object *
-_list_content_get(void *data, Evas_Object *obj, const char *source)
-{
-   Process_Info *proc = data;
-   Evas_Object *box, *label;
-   Evas_Object *table;
-   char buf[1024];
-   if (strcmp(source, "elm.swallow.content"))
-     return NULL;
-
-   table = elm_table_add(obj);
-   evas_object_size_hint_weight_set(table, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   evas_object_show(table);
-
-   label = _label_get(obj, "%d", proc->pid);
-   elm_table_pack(table, label, 0, 0, 1, 1);
-
-   label = _label_get(obj, "%d", proc->uid);
-   elm_table_pack(table, label, 1, 0, 1, 1);
-
-   label = _label_get(obj, "%d%%", proc->cpu_usage);
-   elm_table_pack(table, label, 2, 0, 1, 1);
-
-   label = _label_get(obj, "%d", proc->cpu_id);
-   elm_table_pack(table, label, 3, 0, 1, 1);
-
-   label = _label_get(obj, "%ldK", proc->mem_size);
-   elm_table_pack(table, label, 4, 0, 1, 1);
-
-   label = _label_get(obj, "%ldK", proc->mem_rss);
-   elm_table_pack(table, label, 5, 0, 1, 1);
-
-   label = _label_get(obj, "%s", proc->state);
-   elm_table_pack(table, label, 6, 0, 1, 1);
-
-   label = _label_get(obj, "%s", proc->command);
-   elm_table_pack(table, label, 7, 0, 1, 1);
-
-   return table;
-}
-
 void stats_poll(Ecore_Thread *thread, Ui *ui)
 {
-   Eina_List *list_prev, *processes, *l, *l2;
+   Eina_List *processes = NULL, *l, *l2;
    Process_Info *proc, *proc_prev;
-
-   list_prev = NULL;
 
    while (1)
      {
         processes = process_list_get();
-        EINA_LIST_FOREACH(processes, l, proc)
-          {
-             double proc_cpu_usage = 0.0;
-             EINA_LIST_FOREACH(list_prev, l2, proc_prev)
-               {
-                  if (proc->pid == proc_prev->pid)
-                    {
-                       double diff = proc->cpu_time - proc_prev->cpu_time;
-                       if (diff)
-                         {
-                            proc_cpu_usage = (diff / 100.0) * 100.0;
-                         }
-                       break;
-                    }
-               }
-             proc->cpu_usage = proc_cpu_usage;
-          }
-
-
-        EINA_LIST_FREE(list_prev, proc)
-          {
-             free(proc->command);
-             free(proc);
-          }
-
-        eina_list_free(list_prev);
-
+        ecore_thread_feedback(thread, processes);
         if (ecore_thread_check(thread))
           break;
-
-        ecore_thread_feedback(thread, processes);
         sleep(10);
-        list_prev = process_list_get();
      }
 }
 
@@ -168,34 +67,61 @@ _thread_system_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    free(results);
 }
 
+static Evas_Object *
+_label_get(Evas_Object *parent, const char *fmt, ...)
+{
+   char text[1024];
+   char buf[1024];
+   va_list ap;
+
+   va_start(ap, fmt);
+   vsnprintf(text, sizeof(text), fmt, ap);
+   va_end(ap);
+
+   snprintf(buf, sizeof(buf), "<hilight>%s</>", text);
+   Evas_Object *label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(label, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(label, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, buf);
+   evas_object_show(label);
+
+   return label;
+}
+
 static void
 _thread_process_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 {
    Ui *ui;
-   Eina_List *processes, *l;
+   Evas_Object *label;
+   Eina_List *procs, *l;
    Process_Info *proc;
-   Elm_Genlist_Item_Class *itc;
 
    ui = data;
-   processes = msg;
+   procs = msg;
 
-   itc = elm_genlist_item_class_new();
-   itc->item_style = "full";
-   itc->func.text_get = NULL;
-   itc->func.content_get = _list_content_get;
-   itc->func.state_get = NULL;
-   itc->func.del = _list_content_del;
+   Evas_Object *table = ui->table;
 
-   elm_genlist_clear(ui->list);
-
-   EINA_LIST_FOREACH(processes, l, proc)
+   int row = 0;
+   EINA_LIST_FOREACH(procs, l, proc)
      {
-        elm_genlist_item_append(ui->list, itc, proc, NULL, ELM_GENLIST_ITEM_NONE, NULL, NULL);
+        label = _label_get(table, "%d", proc->pid);
+        elm_table_pack(table, label, 0, row, 1, 1);
+        label = _label_get(table, "%d", proc->uid);
+        elm_table_pack(table, label, 1, row, 1, 1);
+        label = _label_get(table, "%s", proc->command);
+        elm_table_pack(table, label, 2, row, 1, 1);
+        label = _label_get(table, "%d", proc->cpu_id);
+        elm_table_pack(table, label, 3, row, 1, 1);
+        label = _label_get(table, "%d%%", proc->cpu_usage);
+        elm_table_pack(table, label, 4, row, 1, 1);
+        label = _label_get(table, "%u K", proc->mem_size);
+        elm_table_pack(table, label, 5, row, 1, 1);
+        label = _label_get(table, "%u K", proc->mem_rss);
+        elm_table_pack(table, label, 6, row, 1, 1);
+        label = _label_get(table, "%s", proc->state);
+        elm_table_pack(table, label, 7, row, 1, 1);
+        row++;
      }
-
-   elm_genlist_realized_items_update(ui->list);
-
-   elm_genlist_item_class_free(itc);
 }
 
 static void
@@ -290,14 +216,17 @@ Evas_Object *ui_add(Evas_Object *parent)
    elm_object_content_set(frame, progress_mem);
    evas_object_show(progress_mem);
 
-   ui->list = list = elm_genlist_add(parent);
-   elm_genlist_mode_set(list, ELM_LIST_SCROLL);
-   elm_genlist_select_mode_set(list, ELM_OBJECT_SELECT_MODE_NONE);
-   elm_scroller_bounce_set(list, EINA_TRUE, EINA_TRUE);
-   elm_scroller_policy_set(list, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
-   evas_object_size_hint_weight_set(list, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   evas_object_size_hint_align_set(list, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   evas_object_show(list);
+   ui->table = table = elm_table_add(parent);
+   evas_object_size_hint_weight_set(table, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   evas_object_show(table);
+
+   Evas_Object *scroller = elm_scroller_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
+   evas_object_show(scroller);
+   elm_object_content_set(scroller, table);
 
    frame = elm_frame_add(box);
    evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -305,5 +234,5 @@ Evas_Object *ui_add(Evas_Object *parent)
    elm_object_text_set(frame, "Process Information");
    elm_box_pack_end(box, frame);
    evas_object_show(frame);
-   elm_object_content_set(frame, list);
+   elm_object_content_set(frame, scroller);
 }
