@@ -486,7 +486,7 @@ _process_list_freebsd_get(void)
    size_t len;
    int pagesize = getpagesize();
 
-   list = list_new();
+   list = NULL;
 
    len = sizeof(int);
    if (sysctlnametomib("kern.proc.pid", mib, &len) == -1)

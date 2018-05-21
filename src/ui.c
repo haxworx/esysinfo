@@ -101,26 +101,9 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 
    Evas_Object *table = ui->table;
 
-   int row = 0;
    EINA_LIST_FOREACH(procs, l, proc)
      {
-        label = _label_get(table, "%d", proc->pid);
-        elm_table_pack(table, label, 0, row, 1, 1);
-        label = _label_get(table, "%d", proc->uid);
-        elm_table_pack(table, label, 1, row, 1, 1);
-        label = _label_get(table, "%s", proc->command);
-        elm_table_pack(table, label, 2, row, 1, 1);
-        label = _label_get(table, "%d", proc->cpu_id);
-        elm_table_pack(table, label, 3, row, 1, 1);
-        label = _label_get(table, "%u", proc->cpu_time);
-        elm_table_pack(table, label, 4, row, 1, 1);
-        label = _label_get(table, "%u K", proc->mem_size);
-        elm_table_pack(table, label, 5, row, 1, 1);
-        label = _label_get(table, "%u K", proc->mem_rss);
-        elm_table_pack(table, label, 6, row, 1, 1);
-        label = _label_get(table, "%s", proc->state);
-        elm_table_pack(table, label, 7, row, 1, 1);
-        row++;
+        printf("it is %d and %s\n", proc->pid,proc->command);
      }
 }
 
