@@ -33,8 +33,8 @@ typedef struct _Process_Info
    int8_t      nice;
    int32_t     numthreads;
    const char *state;
-   uint64_t    mem_size;
-   uint64_t    mem_rss;
+   int64_t    mem_size;
+   int64_t    mem_rss;
 } Process_Info;
 
 /**

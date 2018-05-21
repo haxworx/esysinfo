@@ -3,7 +3,7 @@
 
 #include <Elementary.h>
 
-Evas_Object *
+void
 ui_add(Evas_Object *win);
 
 #endif

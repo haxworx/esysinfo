@@ -33,6 +33,7 @@ int main(int argc, char **argv)
 {
    Evas_Object *win;
 
+   eina_init();
    ecore_init();
    elm_init(argc, argv);
 
@@ -44,6 +45,7 @@ int main(int argc, char **argv)
 
    ecore_main_loop_begin();
 
+   eina_shutdown();
    ecore_shutdown();
    elm_shutdown();
 
