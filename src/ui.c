@@ -70,7 +70,6 @@ void stats_poll(Ecore_Thread *thread, Ui *ui)
 
    while (1)
      {
-        eina_lock_take(&_lock);
         ecore_thread_feedback(thread, ui);
         if (ecore_thread_check(thread))
           break;
@@ -231,6 +230,8 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
    char text_size[8192] = { 0 };
    char text_state[8192] = { 0 };
    char text_threads[8192] = { 0 };
+
+   eina_lock_take(&_lock);
 
    ui = data;
 
