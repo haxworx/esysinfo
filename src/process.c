@@ -401,7 +401,7 @@ _process_list_macos_get(void)
         if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1)
           continue;
 
-        struct Process_Infoaskinfo taskinfo;
+        struct proc_taskinfo taskinfo;
         int size = proc_pidinfo(i, PROC_PIDTASKINFO, 0, &taskinfo, sizeof(taskinfo));
         if (size != sizeof(taskinfo)) continue;
 
@@ -434,7 +434,7 @@ Process_Info *
 proc_info_by_pid(int pid)
 {
    struct kinfo_proc kp;
-   struct Process_Infoaskinfo taskinfo;
+   struct proc_taskinfo taskinfo;
    struct proc_workqueueinfo workqueue;
    size_t len;
    int size, mib[6];
