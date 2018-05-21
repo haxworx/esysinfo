@@ -103,7 +103,9 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 
    EINA_LIST_FOREACH(procs, l, proc)
      {
-        printf("it is %d and %s\n", proc->pid,proc->command);
+        printf("pid: %d uid: %d nice: %d pri: %d cpu: %d thr: %d size: %u K rss: %u K cmd: %s state: (%s)\n",
+               proc->pid, proc->uid, proc->nice, proc->priority, proc->cpu_id, proc->numthreads, proc->mem_size >> 10,
+               proc->mem_rss >> 10, proc->command, proc->state);
      }
 }
 
