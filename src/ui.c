@@ -27,7 +27,7 @@ void stats_poll(Ecore_Thread *thread, Ui *ui)
 
    while (1)
      {
-        processes = process_list_get();
+        processes = proc_info_all_get();
         ecore_thread_feedback(thread, processes);
         if (ecore_thread_check(thread))
           break;
@@ -112,7 +112,7 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
         elm_table_pack(table, label, 2, row, 1, 1);
         label = _label_get(table, "%d", proc->cpu_id);
         elm_table_pack(table, label, 3, row, 1, 1);
-        label = _label_get(table, "%d%%", proc->cpu_usage);
+        label = _label_get(table, "%u", proc->cpu_time);
         elm_table_pack(table, label, 4, row, 1, 1);
         label = _label_get(table, "%u K", proc->mem_size);
         elm_table_pack(table, label, 5, row, 1, 1);
