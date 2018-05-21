@@ -320,6 +320,8 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
         strcat(text_cmd, buf);
         snprintf(buf, sizeof(buf), "%s <br>", proc->state);
         strcat(text_state, buf);
+
+        free(proc);
      }
 
    if (procs)
