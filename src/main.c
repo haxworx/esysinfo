@@ -29,7 +29,8 @@ _win_add(void)
    return win;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
    Evas_Object *win;
 
@@ -51,3 +52,4 @@ int main(int argc, char **argv)
 
    return 0;
 }
+

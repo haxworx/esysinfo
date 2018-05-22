@@ -119,7 +119,7 @@ typedef struct results_t results_t;
 struct results_t
 {
    int           cpu_count;
-   cpu_core_t    **cores;
+   cpu_core_t  **cores;
 
    meminfo_t     memory;
 
@@ -1181,3 +1181,4 @@ system_cpu_memory_get(double *percent_cpu, long *memory_total, long *memory_used
 
    return results.cpu_count;
 }
+

@@ -41,74 +41,77 @@ _process_state_name(char state)
 
    switch (state)
      {
-        case 'D':
-          statename = "DSLEEP";
+      case 'D':
+        statename = "DSLEEP";
         break;
 
-        case 'I':
-          statename = "IDLE";
+      case 'I':
+        statename = "IDLE";
         break;
 
-        case 'R':
-          statename = "RUN";
+      case 'R':
+        statename = "RUN";
         break;
 
-        case 'S':
-          statename = "SLEEP";
+      case 'S':
+        statename = "SLEEP";
         break;
 
-        case 'T':
-        case 't':
-          statename = "STOP";
+      case 'T':
+      case 't':
+        statename = "STOP";
         break;
 
-        case 'X':
-          statename = "DEAD";
+      case 'X':
+        statename = "DEAD";
         break;
 
-        case 'Z':
-          statename = "ZOMB";
+      case 'Z':
+        statename = "ZOMB";
         break;
      }
 #else
    switch (state)
      {
-        case SIDL:
-           statename = "IDLE";
+      case SIDL:
+        statename = "IDLE";
         break;
 
-        case SRUN:
-           statename = "RUN";
+      case SRUN:
+        statename = "RUN";
         break;
 
-        case SSLEEP:
-          statename = "SLEEP";
+      case SSLEEP:
+        statename = "SLEEP";
         break;
 
-        case SSTOP:
-          statename = "STOP";
+      case SSTOP:
+        statename = "STOP";
         break;
+
 #if !defined(__MacOS__)
 #if !defined(__OpenBSD__)
-        case SWAIT:
-          statename = "WAIT";
+      case SWAIT:
+        statename = "WAIT";
         break;
 
-        case SLOCK:
-           statename = "LOCK";
+      case SLOCK:
+        statename = "LOCK";
         break;
+
 #endif
-        case SZOMB:
-          statename = "ZOMB";
+      case SZOMB:
+        statename = "ZOMB";
         break;
+
 #endif
 #if defined(__OpenBSD__)
-        case SDEAD:
-          statename = "DEAD";
+      case SDEAD:
+        statename = "DEAD";
         break;
 
-        case SONPROC:
-          statename = "ONPROC";
+      case SONPROC:
+        statename = "ONPROC";
         break;
 #endif
      }
@@ -145,7 +148,7 @@ _process_list_linux_get(void)
    int pagesize = getpagesize();
 
    files = ecore_file_ls("/proc");
-   EINA_LIST_FOREACH(files, l, name)
+   EINA_LIST_FOREACH (files, l, name)
      {
         pid = atoi(name);
         if (!pid) continue;
@@ -163,10 +166,10 @@ _process_list_linux_get(void)
              strncpy(program_name, start, end - start);
              program_name[end - start] = '\0';
 
-             res = sscanf (end + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u %d %d %d %d %d %d %d %d %d",
-                           &state, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &utime, &stime, &cutime, &cstime,
-                           &pri, &nice, &numthreads, &dummy, &dummy, &mem_size, &mem_rss, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy,
-                           &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &psr, &dummy, &dummy, &dummy, &dummy, &dummy);
+             res = sscanf(end + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u %d %d %d %d %d %d %d %d %d",
+                          &state, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &utime, &stime, &cutime, &cstime,
+                          &pri, &nice, &numthreads, &dummy, &dummy, &mem_size, &mem_rss, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy,
+                          &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &psr, &dummy, &dummy, &dummy, &dummy, &dummy);
           }
 
         fclose(f);
@@ -182,8 +185,8 @@ _process_list_linux_get(void)
           {
              if (!strncmp(line, "Uid:", 4))
                {
-                   uid = _parse_line(line);
-                   break;
+                  uid = _parse_line(line);
+                  break;
                }
           }
 
@@ -206,10 +209,10 @@ _process_list_linux_get(void)
         list = eina_list_append(list, p);
      }
 
-   EINA_LIST_FREE(files, name);
-     {
-        free(name);
-     }
+   EINA_LIST_FREE (files, name) ;
+   {
+      free(name);
+   }
 
    if (files)
      eina_list_free(files);
@@ -241,10 +244,10 @@ proc_info_by_pid(int pid)
         strncpy(program_name, start, end - start);
         program_name[end - start] = '\0';
 
-        res = sscanf (end + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u %d %d %d %d %d %d %d %d %d",
-                      &state, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &utime, &stime, &cutime, &cstime,
-                      &pri, &nice, &numthreads, &dummy, &dummy, &mem_size, &mem_rss, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy,
-                      &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &psr, &dummy, &dummy, &dummy, &dummy, &dummy);
+        res = sscanf(end + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u %d %d %d %d %d %d %d %d %d",
+                     &state, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &utime, &stime, &cutime, &cstime,
+                     &pri, &nice, &numthreads, &dummy, &dummy, &mem_size, &mem_rss, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &dummy,
+                     &dummy, &dummy, &dummy, &dummy, &dummy, &dummy, &psr, &dummy, &dummy, &dummy, &dummy, &dummy);
      }
    fclose(f);
 
@@ -355,20 +358,20 @@ _process_list_openbsd_get(void)
         p->cpu_time = kp[i].p_cpticks;
         p->mem_size = (kp[i].p_vm_tsize * pagesize) + (kp[i].p_vm_dsize * pagesize) + (kp[i].p_vm_ssize * pagesize);
         p->mem_rss = kp[i].p_vm_rssize * pagesize;
-	p->priority = kp[i].p_priority - PZERO;
-	p->nice = kp[i].p_nice - NZERO;
+        p->priority = kp[i].p_priority - PZERO;
+        p->nice = kp[i].p_nice - NZERO;
         p->numthreads = -1;
         list = eina_list_append(list, p);
      }
 
    kp = kvm_getprocs(kern, KERN_PROC_SHOW_THREADS, 0, sizeof(*kp), &pid_count);
 
-   EINA_LIST_FOREACH(list, l, p)
+   EINA_LIST_FOREACH (list, l, p)
      {
         for (int i = 0; i < pid_count; i++)
           {
              if (kp[i].p_pid == p->pid)
-	       p->numthreads++;
+               p->numthreads++;
           }
      }
 
@@ -513,7 +516,7 @@ _process_list_freebsd_get(void)
         p->state = _process_state_name(kp.ki_stat);
         p->mem_size = kp.ki_size;
         p->mem_rss = kp.ki_rssize * pagesize;
-        p->nice =  kp.ki_nice - NZERO;
+        p->nice = kp.ki_nice - NZERO;
         p->priority = kp.ki_pri.pri_level - PZERO;
         p->numthreads = kp.ki_numthreads;
 

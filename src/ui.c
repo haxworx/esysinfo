@@ -94,8 +94,8 @@ _thread_sys_stats_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    Ui *ui = data;
    Sys_Stats *stats_sys = msg;
 
-   elm_progressbar_value_set(ui->progress_cpu, (double) stats_sys->cpu_usage / 100);
-   elm_progressbar_value_set(ui->progress_mem, (double) ((stats_sys->mem_total / 100.0) * stats_sys->mem_used) / 1000000);
+   elm_progressbar_value_set(ui->progress_cpu, (double)stats_sys->cpu_usage / 100);
+   elm_progressbar_value_set(ui->progress_mem, (double)((stats_sys->mem_total / 100.0) * stats_sys->mem_used) / 1000000);
 
    free(stats_sys);
 }
@@ -265,49 +265,49 @@ _list_procs_sort(Ui *ui, Eina_List *list_procs)
 {
    switch (ui->sort_type)
      {
-        case SORT_BY_PID:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_pid);
+      case SORT_BY_PID:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_pid);
         break;
 
-        case SORT_BY_UID:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_uid);
+      case SORT_BY_UID:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_uid);
         break;
 
-        case SORT_BY_NICE:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_nice);
+      case SORT_BY_NICE:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_nice);
         break;
 
-        case SORT_BY_PRI:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_pri);
+      case SORT_BY_PRI:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_pri);
         break;
 
-        case SORT_BY_CPU:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_cpu);
+      case SORT_BY_CPU:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_cpu);
         break;
 
-        case SORT_BY_THREADS:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_threads);
+      case SORT_BY_THREADS:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_threads);
         break;
 
-        case SORT_BY_SIZE:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_size);
+      case SORT_BY_SIZE:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_size);
         break;
 
-        case SORT_BY_RSS:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_rss);
+      case SORT_BY_RSS:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_rss);
         break;
 
-        case SORT_BY_CMD:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_cmd);
+      case SORT_BY_CMD:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_cmd);
         break;
 
-        case SORT_BY_STATE:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_state);
+      case SORT_BY_STATE:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_state);
         break;
 
-        case SORT_BY_NONE:
-        case SORT_BY_CPU_USAGE:
-           list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_cpu_usage);
+      case SORT_BY_NONE:
+      case SORT_BY_CPU_USAGE:
+        list_procs = eina_list_sort(list_procs, eina_list_count(list_procs), _sort_by_cpu_usage);
         break;
      }
 
@@ -316,7 +316,6 @@ _list_procs_sort(Ui *ui, Eina_List *list_procs)
 
    return list_procs;
 }
-
 
 static void
 _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg EINA_UNUSED)
@@ -332,7 +331,7 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 
    list_procs = proc_info_all_get();
 
-   EINA_LIST_FOREACH(list_procs, l, proc)
+   EINA_LIST_FOREACH (list_procs, l, proc)
      {
         int64_t time_prev = _cpu_times[proc->pid];
         proc->cpu_usage = 0;
@@ -344,7 +343,7 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 
    list_procs = _list_procs_sort(ui, list_procs);
 
-   EINA_LIST_FREE(list_procs, proc)
+   EINA_LIST_FREE (list_procs, proc)
      {
         _fields_append(ui, proc);
         _have_cpu_times = EINA_TRUE;
@@ -398,11 +397,11 @@ _thread_error_cb(void *data EINA_UNUSED, Ecore_Thread *thread)
 static char *
 _progress_mem_format_cb(double val)
 {
-  char buf[1024];
+   char buf[1024];
 
-  snprintf(buf, sizeof(buf), "%ld M out of %ld M", _memory_used, _memory_total);
+   snprintf(buf, sizeof(buf), "%ld M out of %ld M", _memory_used, _memory_total);
 
-  return strdup(buf);
+   return strdup(buf);
 }
 
 static void
@@ -513,8 +512,6 @@ _btn_cpu_usage_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_
 
    _ui_refresh(ui);
 }
-
-
 
 static void
 _btn_threads_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
@@ -890,3 +887,4 @@ ui_add(Evas_Object *parent)
    ecore_thread_feedback_run(_thread_sys_stats, _thread_sys_stats_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
    ecore_thread_feedback_run(_thread_proc_stats, _thread_proc_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
 }
+

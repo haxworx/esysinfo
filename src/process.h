@@ -21,12 +21,12 @@
 #include <unistd.h>
 
 #if !defined(PID_MAX)
-# define PID_MAX 99999
+# define PID_MAX     99999
 #endif
 
 #define CMD_NAME_MAX 256
 
-typedef struct _Process_Info 
+typedef struct _Process_Info
 {
    pid_t       pid;
    uid_t       uid;
@@ -44,7 +44,8 @@ typedef struct _Process_Info
    long        cpu_time;
 } Process_Info;
 
-typedef enum {
+typedef enum
+{
    PROCESS_INFO_FIELD_PID,
    PROCESS_INFO_FIELD_UID,
    PROCESS_INFO_FIELD_NICE,
@@ -69,7 +70,7 @@ typedef enum {
  * @return A list of proc_t members for all processes.
  */
 Eina_List *
-proc_info_all_get(void);
+ proc_info_all_get(void);
 
 /**
  * Query a process for its current state.
@@ -78,8 +79,8 @@ proc_info_all_get(void);
  *
  * @return A proc_t pointer containing the process information.
  */
-Process_Info  *
-proc_info_by_pid(int pid);
+Process_Info *
+ proc_info_by_pid(int pid);
 
 /**
  * @}
