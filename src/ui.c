@@ -605,7 +605,7 @@ ui_add(Evas_Object *parent)
    Ui *ui;
 
    ui = calloc(1, sizeof(Ui));
-   ui->poll_delay = 5;
+   ui->poll_delay = 2;
    ui->sort_reverse = EINA_TRUE;
 
    eina_lock_new(&_lock);
