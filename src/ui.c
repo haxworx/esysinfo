@@ -637,6 +637,10 @@ ui_add(Evas_Object *parent)
    ui = calloc(1, sizeof(Ui));
    ui->poll_delay = 2;
    ui->sort_reverse = EINA_TRUE;
+   for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
+     {
+        ui->fields[i] = eina_strbuf_new();
+     }
 
    eina_lock_new(&_lock);
 
@@ -915,11 +919,6 @@ ui_add(Evas_Object *parent)
    evas_object_smart_callback_add(ui->btn_cmd, "clicked", _btn_cmd_clicked_cb, ui);
    evas_object_smart_callback_add(ui->btn_state, "clicked", _btn_state_clicked_cb, ui);
    evas_object_smart_callback_add(ui->btn_cpu_usage, "clicked", _btn_cpu_usage_clicked_cb, ui);
-
-   for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
-     {
-        ui->fields[i] = eina_strbuf_new();
-     }
 
    ecore_thread_feedback_run(_thread_sys_stats, _thread_sys_stats_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
    ecore_thread_feedback_run(_thread_proc_stats, _thread_proc_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
