@@ -26,16 +26,38 @@ typedef struct _Process_Info
 {
    pid_t       pid;
    uid_t       uid;
-   char        command[CMD_NAME_MAX];
-   int         cpu_id;
-   long        cpu_time;
-   int8_t      priority;
    int8_t      nice;
+   int8_t      priority;
+   int         cpu_id;
    int32_t     numthreads;
+   int64_t     mem_size;
+   int64_t     mem_rss;
+   char        command[CMD_NAME_MAX];
    const char *state;
-   int64_t    mem_size;
-   int64_t    mem_rss;
+
+   // Not used yet in UI.
+   long        cpu_time;
+   double      cpu_usage;
 } Process_Info;
+
+typedef enum {
+   PROCESS_INFO_FIELD_PID,
+   PROCESS_INFO_FIELD_UID,
+   PROCESS_INFO_FIELD_NICE,
+   PROCESS_INFO_FIELD_PRI,
+   PROCESS_INFO_FIELD_CPU,
+   PROCESS_INFO_FIELD_THREADS,
+   PROCESS_INFO_FIELD_SIZE,
+   PROCESS_INFO_FIELD_RSS,
+   PROCESS_INFO_FIELD_COMMAND,
+   PROCESS_INFO_FIELD_STATE,
+
+   // Not used yet in UI.
+   PROCESS_INFO_FIELD_CPU_TIME,
+   PROCESS_INFO_FIELD_CPU_USE,
+} Process_Info_Field;
+
+#define PROCESS_INFO_FIELDS 10
 
 /**
  * Query a full list of running processes and return a list.
