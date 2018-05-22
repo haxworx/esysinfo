@@ -215,7 +215,7 @@ _sort_by_cmd(const void *p1, const void *p2)
 
    inf1 = p1; inf2 = p2;
 
-   return strcmp(inf1->command, inf2->command);
+   return strcasecmp(inf1->command, inf2->command);
 }
 
 static int
