@@ -58,9 +58,10 @@ typedef struct Ui
 
 typedef struct Sys_Info
 {
+   int    cpu_count;
    double cpu_usage;
-   long mem_total;
-   long mem_used;
+   long   mem_total;
+   long   mem_used;
 } Sys_Info;
 
 typedef struct _Cpu_Use {
@@ -78,9 +79,6 @@ static long _memory_used = 0;
 void
 _stats_poll(Ecore_Thread *thread, Ui *ui)
 {
-   Eina_List *processes = NULL, *l, *l2;
-   Process_Info *proc, *proc_prev;
-
    while (1)
      {
         ecore_thread_feedback(thread, ui);
@@ -93,15 +91,11 @@ _stats_poll(Ecore_Thread *thread, Ui *ui)
 static void
 _thread_system_run(void *data, Ecore_Thread *thread)
 {
-   int cpu_count;
-   double cpu_usage;
-   long mem_total, mem_used;
-
    while (1)
      {
         Sys_Info *results = malloc(sizeof(Sys_Info));
 
-        system_cpu_memory_get(&results->cpu_usage, &results->mem_total, &results->mem_used);
+        results->cpu_count = system_cpu_memory_get(&results->cpu_usage, &results->mem_total, &results->mem_used);
 
         _memory_total = results->mem_total >>= 10;
         _memory_used = results->mem_used >>= 10;
@@ -250,8 +244,6 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
    eina_lock_take(&_lock);
 
    ui = data;
-
-   Evas_Object *table = ui->table;
 
    for (i = 0; i < PROCESS_INFO_FIELDS; i++)
      {
