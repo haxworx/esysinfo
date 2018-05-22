@@ -432,9 +432,9 @@ _icon_sort_set(Evas_Object *button, Eina_Bool reverse)
 {
    Evas_Object *icon = elm_icon_add(button);
    if (reverse)
-     elm_icon_standard_set(icon, "go-up");
-   else
      elm_icon_standard_set(icon, "go-down");
+   else
+     elm_icon_standard_set(icon, "go-up");
 
    elm_object_part_content_set(button, "icon", icon);
 }
@@ -856,7 +856,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 9, 1, 1, 1);
 
    ui->button_cpu_usage = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _icon_sort_set(button, EINA_TRUE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "CPU Use");
