@@ -3,9 +3,6 @@
 #include "ui.h"
 #include <stdio.h>
 
-static Eina_Bool _have_cpu_times = EINA_FALSE;
-static int64_t _cpu_times[PID_MAX];
-
 static Eina_Lock _lock;
 
 static long _memory_total = 0;
@@ -16,14 +13,14 @@ _thread_sys_stats(void *data, Ecore_Thread *thread)
 {
    while (1)
      {
-        Sys_Stats *stats_sys = malloc(sizeof(Sys_Stats));
+        Sys_Stats *sys = malloc(sizeof(Sys_Stats));
 
-        stats_sys->cpu_count = system_cpu_memory_get(&stats_sys->cpu_usage, &stats_sys->mem_total, &stats_sys->mem_used);
+        sys->cpu_count = system_cpu_memory_get(&sys->cpu_usage, &sys->mem_total, &sys->mem_used);
 
-        _memory_total = stats_sys->mem_total >>= 10;
-        _memory_used = stats_sys->mem_used >>= 10;
+        _memory_total = sys->mem_total >>= 10;
+        _memory_used = sys->mem_used >>= 10;
 
-        ecore_thread_feedback(thread, stats_sys);
+        ecore_thread_feedback(thread, sys);
      }
 }
 
@@ -31,18 +28,18 @@ static void
 _thread_sys_stats_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 {
    Ui *ui = data;
-   Sys_Stats *stats_sys = msg;
+   Sys_Stats *sys = msg;
 
-   elm_progressbar_value_set(ui->progress_cpu, (double)stats_sys->cpu_usage / 100);
-   elm_progressbar_value_set(ui->progress_mem, (double)((stats_sys->mem_total / 100.0) * stats_sys->mem_used) / 1000000);
+   elm_progressbar_value_set(ui->progress_cpu, (double)sys->cpu_usage / 100);
+   elm_progressbar_value_set(ui->progress_mem, (double)((sys->mem_total / 100.0) * sys->mem_used) / 1000000);
 
-   free(stats_sys);
+   free(sys);
 }
 
 static int
 _sort_by_pid(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -52,7 +49,7 @@ _sort_by_pid(const void *p1, const void *p2)
 static int
 _sort_by_uid(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -62,7 +59,7 @@ _sort_by_uid(const void *p1, const void *p2)
 static int
 _sort_by_nice(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -72,7 +69,7 @@ _sort_by_nice(const void *p1, const void *p2)
 static int
 _sort_by_pri(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -82,7 +79,7 @@ _sort_by_pri(const void *p1, const void *p2)
 static int
 _sort_by_cpu(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -92,7 +89,7 @@ _sort_by_cpu(const void *p1, const void *p2)
 static int
 _sort_by_threads(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -102,7 +99,7 @@ _sort_by_threads(const void *p1, const void *p2)
 static int
 _sort_by_size(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -112,7 +109,7 @@ _sort_by_size(const void *p1, const void *p2)
 static int
 _sort_by_rss(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -122,7 +119,7 @@ _sort_by_rss(const void *p1, const void *p2)
 static int
 _sort_by_cpu_usage(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -132,7 +129,7 @@ _sort_by_cpu_usage(const void *p1, const void *p2)
 static int
 _sort_by_cmd(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -142,7 +139,7 @@ _sort_by_cmd(const void *p1, const void *p2)
 static int
 _sort_by_state(const void *p1, const void *p2)
 {
-   const Process_Info *inf1, *inf2;
+   const Proc_Stats *inf1, *inf2;
 
    inf1 = p1; inf2 = p2;
 
@@ -150,7 +147,7 @@ _sort_by_state(const void *p1, const void *p2)
 }
 
 static void
-_fields_append(Ui *ui, Process_Info *proc)
+_fields_append(Ui *ui, Proc_Stats *proc)
 {
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PID], "%d <br>", proc->pid);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
@@ -166,7 +163,7 @@ _fields_append(Ui *ui, Process_Info *proc)
 }
 
 static void
-_fields_show(Ui *ui, Process_Info *proc)
+_fields_show(Ui *ui, Proc_Stats *proc)
 {
    elm_object_text_set(ui->entry_pid, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_PID]));
    elm_object_text_set(ui->entry_uid, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_UID]));
@@ -260,9 +257,8 @@ static void
 _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg EINA_UNUSED)
 {
    Ui *ui;
-   Evas_Object *label;
    Eina_List *list_procs, *l;
-   Process_Info *proc;
+   Proc_Stats *proc;
 
    eina_lock_take(&_lock);
 
@@ -272,9 +268,9 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 
    EINA_LIST_FOREACH (list_procs, l, proc)
      {
-        int64_t time_prev = _cpu_times[proc->pid];
+        int64_t time_prev = ui->cpu_times[proc->pid];
         proc->cpu_usage = 0;
-        if (_have_cpu_times && proc->cpu_time > time_prev)
+        if (!ui->first_run && proc->cpu_time > time_prev)
           {
              proc->cpu_usage = (proc->cpu_time - time_prev) / ui->poll_delay;
           }
@@ -285,8 +281,8 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
    EINA_LIST_FREE (list_procs, proc)
      {
         _fields_append(ui, proc);
-        _have_cpu_times = EINA_TRUE;
-        _cpu_times[proc->pid] = proc->cpu_time;
+        ui->first_run = EINA_FALSE;
+        ui->cpu_times[proc->pid] = proc->cpu_time;
 
         free(proc);
      }
@@ -351,7 +347,7 @@ _progress_mem_format_free_cb(char *str)
 }
 
 static void
-_icon_sort_set(Evas_Object *button, Eina_Bool reverse)
+_btn_icon_state_set(Evas_Object *button, Eina_Bool reverse)
 {
    Evas_Object *icon = elm_icon_add(button);
    if (reverse)
@@ -370,7 +366,7 @@ _btn_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    if (ui->sort_type == SORT_BY_PID)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_pid, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_pid, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_PID;
 
@@ -385,7 +381,7 @@ _btn_uid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    if (ui->sort_type == SORT_BY_UID)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_uid, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_uid, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_UID;
 
@@ -400,7 +396,7 @@ _btn_nice_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
    if (ui->sort_type == SORT_BY_NICE)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_nice, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_nice, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_NICE;
 
@@ -415,7 +411,7 @@ _btn_pri_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    if (ui->sort_type == SORT_BY_PRI)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_pri, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_pri, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_PRI;
 
@@ -430,7 +426,7 @@ _btn_cpu_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    if (ui->sort_type == SORT_BY_CPU)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_cpu, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_cpu, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_CPU;
 
@@ -445,7 +441,7 @@ _btn_cpu_usage_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_
    if (ui->sort_type == SORT_BY_CPU_USAGE)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_cpu_usage, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_cpu_usage, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_CPU_USAGE;
 
@@ -460,7 +456,7 @@ _btn_threads_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_in
    if (ui->sort_type == SORT_BY_THREADS)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_threads, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_threads, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_THREADS;
 
@@ -475,7 +471,7 @@ _btn_size_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
    if (ui->sort_type == SORT_BY_SIZE)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_size, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_size, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_SIZE;
 
@@ -490,7 +486,7 @@ _btn_rss_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    if (ui->sort_type == SORT_BY_RSS)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_rss, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_rss, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_RSS;
 
@@ -505,7 +501,7 @@ _btn_cmd_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    if (ui->sort_type == SORT_BY_CMD)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_cmd, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_cmd, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_CMD;
 
@@ -520,7 +516,7 @@ _btn_state_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
    if (ui->sort_type == SORT_BY_STATE)
      ui->sort_reverse = !ui->sort_reverse;
 
-   _icon_sort_set(ui->btn_state, ui->sort_reverse);
+   _btn_icon_state_set(ui->btn_state, ui->sort_reverse);
 
    ui->sort_type = SORT_BY_STATE;
 
@@ -537,14 +533,16 @@ ui_add(Evas_Object *parent)
    Ui *ui;
 
    ui = calloc(1, sizeof(Ui));
+   ui->first_run = EINA_TRUE;
    ui->poll_delay = 2;
    ui->sort_reverse = EINA_TRUE;
+   memset(ui->cpu_times, 0, PID_MAX * sizeof(int64_t));
+
    for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
      {
         ui->fields[i] = eina_strbuf_new();
      }
 
-   memset(&_cpu_times, 0, PID_MAX * sizeof(int64_t));
    eina_lock_new(&_lock);
 
    box = elm_box_add(parent);
@@ -611,7 +609,7 @@ ui_add(Evas_Object *parent)
    elm_object_content_set(frame, scroller);
 
    ui->btn_pid = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "PID");
@@ -629,7 +627,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 0, 1, 1, 1);
 
    ui->btn_uid = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "UID");
@@ -647,7 +645,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 1, 1, 1, 1);
 
    ui->btn_nice = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Nice");
@@ -665,7 +663,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 2, 1, 1, 1);
 
    ui->btn_pri = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
@@ -684,7 +682,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 3, 1, 1, 1);
 
    ui->btn_cpu = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
@@ -703,7 +701,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 4, 1, 1, 1);
 
    ui->btn_threads = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Threads");
@@ -721,7 +719,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 5, 1, 1, 1);
 
    ui->btn_size = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Size");
@@ -739,7 +737,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 6, 1, 1, 1);
 
    ui->btn_rss = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Res");
@@ -757,7 +755,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 7, 1, 1, 1);
 
    ui->btn_cmd = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Command");
@@ -774,7 +772,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 8, 1, 1, 1);
 
    ui->btn_state = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_FALSE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "State");
@@ -793,7 +791,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 9, 1, 1, 1);
 
    ui->btn_cpu_usage = button = elm_button_add(parent);
-   _icon_sort_set(button, EINA_TRUE);
+   _btn_icon_state_set(button, EINA_TRUE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "CPU %");

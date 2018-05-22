@@ -2,6 +2,7 @@
 #define __UI_H__
 
 #include <Elementary.h>
+
 typedef enum
 {
    SORT_BY_NONE,
@@ -48,6 +49,9 @@ typedef struct Ui
    Evas_Object *btn_cpu_usage;
 
    Eina_Strbuf *fields[PROCESS_INFO_FIELDS];
+
+   Eina_Bool    first_run;
+   int64_t      cpu_times[PID_MAX];
 
    int          poll_delay;
 

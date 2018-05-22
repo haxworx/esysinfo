@@ -26,7 +26,7 @@
 
 #define CMD_NAME_MAX 256
 
-typedef struct _Process_Info
+typedef struct _Proc_Stats
 {
    pid_t       pid;
    uid_t       uid;
@@ -42,7 +42,7 @@ typedef struct _Process_Info
 
    // Not used yet in UI.
    long        cpu_time;
-} Process_Info;
+} Proc_Stats;
 
 typedef enum
 {
@@ -60,7 +60,7 @@ typedef enum
 
    // Not used yet in UI.
    PROCESS_INFO_FIELD_CPU_TIME,
-} Process_Info_Field;
+} Proc_Stats_Field;
 
 #define PROCESS_INFO_FIELDS 11
 
@@ -79,7 +79,7 @@ proc_info_all_get(void);
  *
  * @return A proc_t pointer containing the process information.
  */
-Process_Info *
+Proc_Stats *
 proc_info_by_pid(int pid);
 
 /**

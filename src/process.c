@@ -192,7 +192,7 @@ _process_list_linux_get(void)
 
         fclose(f);
 
-        Process_Info *p = calloc(1, sizeof(Process_Info));
+        Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
 
         p->pid = pid;
         p->uid = uid;
@@ -220,7 +220,7 @@ _process_list_linux_get(void)
    return list;
 }
 
-Process_Info *
+Proc_Stats *
 proc_info_by_pid(int pid)
 {
    FILE *f;
@@ -268,7 +268,7 @@ proc_info_by_pid(int pid)
      }
    fclose(f);
 
-   Process_Info *p = calloc(1, sizeof(Process_Info));
+   Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
    p->pid = pid;
    p->uid = uid;
    p->cpu_id = psr;
@@ -288,7 +288,7 @@ proc_info_by_pid(int pid)
 
 #if defined(__OpenBSD__)
 
-Process_Info *
+Proc_Stats *
 proc_info_by_pid(int pid)
 {
    struct kinfo_proc *kp;
@@ -305,7 +305,7 @@ proc_info_by_pid(int pid)
    if (count == 0) return NULL;
    pagesize = getpagesize();
 
-   Process_Info *p = malloc(sizeof(Process_Info));
+   Proc_Stats *p = malloc(sizeof(Proc_Stats));
    p->pid = kp->p_pid;
    p->uid = kp->p_uid;
    p->cpu_id = kp->p_cpuid;
@@ -333,7 +333,7 @@ static Eina_List *
 _process_list_openbsd_get(void)
 {
    struct kinfo_proc *kp;
-   Process_Info *p;
+   Proc_Stats *p;
    char errbuf[4096];
    kvm_t *kern;
    int pid_count, pagesize;
@@ -349,7 +349,7 @@ _process_list_openbsd_get(void)
 
    for (int i = 0; i < pid_count; i++)
      {
-        p = malloc(sizeof(Process_Info));
+        p = malloc(sizeof(Proc_Stats));
         p->pid = kp[i].p_pid;
         p->uid = kp[i].p_uid;
         p->cpu_id = kp[i].p_cpuid;
@@ -407,7 +407,7 @@ _process_list_macos_get(void)
         struct proc_workqueueinfo workqueue;
 
         size = proc_pidinfo(i, PROC_PIDWORKQUEUEINFO, 0, &workqueue, sizeof(workqueue));
-        Process_Info *p = calloc(1, sizeof(Process_Info));
+        Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
 
         p->pid = kp.kp_proc.p_pid;
         p->uid = kp.kp_eproc.e_ucred.cr_uid;
@@ -429,7 +429,7 @@ _process_list_macos_get(void)
    return list;
 }
 
-Process_Info *
+Proc_Stats *
 proc_info_by_pid(int pid)
 {
    struct kinfo_proc kp;
@@ -456,7 +456,7 @@ proc_info_by_pid(int pid)
    if (size != sizeof(workqueue))
      return NULL;
 
-   Process_Info *p = calloc(1, sizeof(Process_Info));
+   Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
    p->pid = kp.kp_proc.p_pid;
    p->uid = kp.kp_eproc.e_ucred.cr_uid;
    p->cpu_id = workqueue.pwq_nthreads;
@@ -500,7 +500,7 @@ _process_list_freebsd_get(void)
              continue;
           }
 
-        Process_Info *p = calloc(1, sizeof(Process_Info));
+        Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
 
         p->pid = kp.ki_pid;
         p->uid = kp.ki_uid;
@@ -526,7 +526,7 @@ _process_list_freebsd_get(void)
    return list;
 }
 
-Process_Info *
+Proc_Stats *
 proc_info_by_pid(int pid)
 {
    struct rusage *usage;
@@ -545,7 +545,7 @@ proc_info_by_pid(int pid)
    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1)
      return NULL;
 
-   Process_Info *p = calloc(1, sizeof(Process_Info));
+   Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
    p->pid = kp.ki_pid;
    p->uid = kp.ki_uid;
    snprintf(p->command, sizeof(p->command), "%s", kp.ki_comm);
