@@ -385,12 +385,26 @@ _progress_mem_format_free_cb(char *str)
 }
 
 static void
+_icon_sort_set(Evas_Object *button, Eina_Bool reverse)
+{
+   Evas_Object *icon = elm_icon_add(button);
+   if (reverse)
+     elm_icon_standard_set(icon, "go-up");
+   else
+     elm_icon_standard_set(icon, "go-down");
+
+   elm_object_part_content_set(button, "icon", icon);
+}
+
+static void
 _button_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
 {
    Ui *ui = data;
 
    if (ui->sort == SORT_PID)
      ui->sort_reverse = !ui->sort_reverse;
+
+   _icon_sort_set(ui->button_pid, ui->sort_reverse);
 
    ui->sort = SORT_PID;
    _update_ui(ui);
@@ -404,6 +418,8 @@ _button_uid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_inf
    if (ui->sort == SORT_UID)
      ui->sort_reverse = !ui->sort_reverse;
 
+   _icon_sort_set(ui->button_uid, ui->sort_reverse);
+
    ui->sort = SORT_UID;
    _update_ui(ui);
 }
@@ -415,6 +431,8 @@ _button_nice_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_in
 
    if (ui->sort == SORT_NICE)
      ui->sort_reverse = !ui->sort_reverse;
+
+   _icon_sort_set(ui->button_nice, ui->sort_reverse);
 
    ui->sort = SORT_NICE;
    _update_ui(ui);
@@ -428,6 +446,8 @@ _button_pri_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_inf
    if (ui->sort == SORT_PRI)
      ui->sort_reverse = !ui->sort_reverse;
 
+   _icon_sort_set(ui->button_pri, ui->sort_reverse);
+
    ui->sort = SORT_PRI;
    _update_ui(ui);
 }
@@ -439,6 +459,8 @@ _button_cpu_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_inf
 
    if (ui->sort == SORT_CPU)
      ui->sort_reverse = !ui->sort_reverse;
+
+   _icon_sort_set(ui->button_cpu, ui->sort_reverse);
 
    ui->sort = SORT_CPU;
    _update_ui(ui);
@@ -452,6 +474,8 @@ _button_threads_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event
    if (ui->sort == SORT_THREADS)
      ui->sort_reverse = !ui->sort_reverse;
 
+   _icon_sort_set(ui->button_threads, ui->sort_reverse);
+
    ui->sort = SORT_THREADS;
    _update_ui(ui);
 }
@@ -463,6 +487,8 @@ _button_size_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_in
 
    if (ui->sort == SORT_SIZE)
      ui->sort_reverse = !ui->sort_reverse;
+
+   _icon_sort_set(ui->button_size, ui->sort_reverse);
 
    ui->sort = SORT_SIZE;
    _update_ui(ui);
@@ -476,6 +502,8 @@ _button_rss_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_inf
    if (ui->sort == SORT_RSS)
      ui->sort_reverse = !ui->sort_reverse;
 
+   _icon_sort_set(ui->button_rss, ui->sort_reverse);
+
    ui->sort = SORT_RSS;
    _update_ui(ui);
 }
@@ -487,6 +515,8 @@ _button_cmd_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_inf
 
    if (ui->sort == SORT_CMD)
      ui->sort_reverse = !ui->sort_reverse;
+
+   _icon_sort_set(ui->button_cmd, ui->sort_reverse);
 
    ui->sort = SORT_CMD;
    _update_ui(ui);
@@ -500,6 +530,8 @@ _button_state_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_i
    if (ui->sort == SORT_STATE)
      ui->sort_reverse = !ui->sort_reverse;
 
+   _icon_sort_set(ui->button_state, ui->sort_reverse);
+
    ui->sort = SORT_STATE;
    _update_ui(ui);
 }
@@ -509,7 +541,7 @@ ui_add(Evas_Object *parent)
 {
    Evas_Object *box, *hbox, *frame, *table;
    Evas_Object *progress_cpu, *progress_mem, *list;
-   Evas_Object *button, *entry;
+   Evas_Object *button, *entry, *icon;
    Ecore_Thread *thread;
    Ui *ui;
 
@@ -581,6 +613,7 @@ ui_add(Evas_Object *parent)
    elm_object_content_set(frame, scroller);
 
    ui->button_pid = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "PID");
@@ -598,6 +631,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 0, 1, 1, 1);
 
    ui->button_uid = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "UID");
@@ -615,6 +649,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 1, 1, 1, 1);
 
    ui->button_nice = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Nice");
@@ -632,6 +667,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 2, 1, 1, 1);
 
    ui->button_pri = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
@@ -650,6 +686,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 3, 1, 1, 1);
 
    ui->button_cpu = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
@@ -668,6 +705,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 4, 1, 1, 1);
 
    ui->button_threads = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Threads");
@@ -685,6 +723,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 5, 1, 1, 1);
 
    ui->button_size = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Size");
@@ -702,6 +741,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 6, 1, 1, 1);
 
    ui->button_rss = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Res");
@@ -719,6 +759,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 7, 1, 1, 1);
 
    ui->button_cmd = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Command");
@@ -735,6 +776,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, entry, 8, 1, 1, 1);
 
    ui->button_state = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "State");
@@ -742,6 +784,7 @@ ui_add(Evas_Object *parent)
    elm_table_pack(table, button, 9, 0, 1, 1);
 
    ui->entry_state = entry = elm_entry_add(parent);
+   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_single_line_set(entry, 1);
