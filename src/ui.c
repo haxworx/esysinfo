@@ -16,7 +16,8 @@ typedef enum
    SORT_RSS,
    SORT_CMD,
    SORT_STATE,
-} Stats_Sort;
+   SORT_CPU_USAGE,
+} Sort_Type;
 
 typedef struct Ui
 {
@@ -33,6 +34,7 @@ typedef struct Ui
    Evas_Object *entry_rss;
    Evas_Object *entry_cmd;
    Evas_Object *entry_state;
+   Evas_Object *entry_cpu_usage;
 
    Evas_Object *button_pid;
    Evas_Object *button_uid;
@@ -44,11 +46,14 @@ typedef struct Ui
    Evas_Object *button_rss;
    Evas_Object *button_cmd;
    Evas_Object *button_state;
+   Evas_Object *button_cpu_usage;
+
+   int          poll_delay;
 
    Evas_Object *table;
 
-   Stats_Sort sort;
-   Eina_Bool sort_reverse;
+   Sort_Type    sort;
+   Eina_Bool    sort_reverse;
 } Ui;
 
 typedef struct Sys_Info
@@ -57,6 +62,13 @@ typedef struct Sys_Info
    long mem_total;
    long mem_used;
 } Sys_Info;
+
+typedef struct _Cpu_Use {
+   pid_t pid;
+   uint64_t cpu_time;
+} Process_Cpu_Use;
+
+static Eina_List *_process_usage = NULL;
 
 static Eina_Lock _lock;
 
@@ -74,7 +86,7 @@ _stats_poll(Ecore_Thread *thread, Ui *ui)
         ecore_thread_feedback(thread, ui);
         if (ecore_thread_check(thread))
           break;
-        sleep(10);
+        sleep(ui->poll_delay);
      }
 }
 
@@ -193,6 +205,16 @@ _sort_by_rss(const void *p1, const void *p2)
 }
 
 static int
+_sort_by_cpu_usage(const void *p1, const void *p2)
+{
+   const Process_Info *inf1, *inf2;
+
+   inf1 = p1; inf2 = p2;
+
+   return inf1->cpu_usage - inf2->cpu_usage;
+}
+
+static int
 _sort_by_cmd(const void *p1, const void *p2)
 {
    const Process_Info *inf1, *inf2;
@@ -218,10 +240,12 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
 {
    Ui *ui;
    Evas_Object *label;
-   Eina_List *procs, *l;
+   Eina_List *procs, *l, *l2;
    Process_Info *proc;
+   Process_Cpu_Use *usage;
    Eina_Strbuf *fields[PROCESS_INFO_FIELDS];
    int i;
+   static int poll_count = 0;
 
    eina_lock_take(&_lock);
 
@@ -235,11 +259,22 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
      }
 
    procs = proc_info_all_get();
+
+   EINA_LIST_FOREACH(procs, l, proc)
+     {
+        proc->cpu_usage = 0;
+        EINA_LIST_FOREACH(_process_usage, l2, usage)
+          {
+             if (usage->pid == proc->pid && proc->cpu_time > usage->cpu_time)
+               {
+                  proc->cpu_usage = (proc->cpu_time - usage->cpu_time) / ui->poll_delay;
+                  break;
+               }
+          }
+     }
+
    switch (ui->sort)
      {
-        case SORT_NONE:
-        break;
-
         case SORT_PID:
            procs = eina_list_sort(procs, eina_list_count(procs), _sort_by_pid);
         break;
@@ -279,23 +314,42 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
         case SORT_STATE:
            procs = eina_list_sort(procs, eina_list_count(procs), _sort_by_state);
         break;
+
+        case SORT_NONE:
+        case SORT_CPU_USAGE:
+           procs = eina_list_sort(procs, eina_list_count(procs), _sort_by_cpu_usage);
+        break;
      }
 
    if (ui->sort_reverse)
      procs = eina_list_reverse(procs);
 
+   Eina_Bool show = EINA_FALSE;
+
+   if (_process_usage || !poll_count)
+     show = EINA_TRUE;
+
    EINA_LIST_FREE(procs, proc)
      {
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_PID], "%d <br>", proc->pid);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_NICE], "%d <br>", proc->nice);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_PRI], "%d <br>", proc->priority);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_CPU], "%d <br>", proc->cpu_id);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_THREADS], "%d <br>", proc->numthreads);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_SIZE], "%u <br>", proc->mem_size);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_RSS], "%u <br>", proc->mem_rss);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_COMMAND], "%s <br>", proc->command);
-        eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_STATE], "%s <br>", proc->state);
+        if (show)
+          {
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_PID], "%d <br>", proc->pid);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_NICE], "%d <br>", proc->nice);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_PRI], "%d <br>", proc->priority);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_CPU], "%d <br>", proc->cpu_id);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_THREADS], "%d <br>", proc->numthreads);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_SIZE], "%u K<br>", proc->mem_size >> 10);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_RSS], "%u K<br>", proc->mem_rss >> 10);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_COMMAND], "%s <br>", proc->command);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_STATE], "%s <br>", proc->state);
+             eina_strbuf_append_printf(fields[PROCESS_INFO_FIELD_CPU_USAGE], "%.0f%% <br>", proc->cpu_usage);
+          }
+
+        Process_Cpu_Use *use = malloc(sizeof(Process_Cpu_Use));
+        use->pid = proc->pid;
+        use->cpu_time = proc->cpu_time;
+        _process_usage = eina_list_append(_process_usage, use);
 
         free(proc);
      }
@@ -303,16 +357,30 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
    if (procs)
      eina_list_free(procs);
 
-   elm_object_text_set(ui->entry_pid, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_PID]));
-   elm_object_text_set(ui->entry_uid, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_UID]));
-   elm_object_text_set(ui->entry_nice, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_NICE]));
-   elm_object_text_set(ui->entry_pri, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_PRI]));
-   elm_object_text_set(ui->entry_cpu, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_CPU]));
-   elm_object_text_set(ui->entry_threads, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_THREADS]));
-   elm_object_text_set(ui->entry_size, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_SIZE]));
-   elm_object_text_set(ui->entry_rss, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_RSS]));
-   elm_object_text_set(ui->entry_cmd, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_COMMAND]));
-   elm_object_text_set(ui->entry_state, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_STATE]));
+   if (poll_count % 2)
+     {
+        EINA_LIST_FREE(_process_usage, usage)
+          {
+             free(usage);
+          }
+        eina_list_free(_process_usage);
+        _process_usage =  NULL;
+     }
+
+   if (show)
+     {
+        elm_object_text_set(ui->entry_pid, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_PID]));
+        elm_object_text_set(ui->entry_uid, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_UID]));
+        elm_object_text_set(ui->entry_nice, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_NICE]));
+        elm_object_text_set(ui->entry_pri, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_PRI]));
+        elm_object_text_set(ui->entry_cpu, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_CPU]));
+        elm_object_text_set(ui->entry_threads, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_THREADS]));
+        elm_object_text_set(ui->entry_size, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_SIZE]));
+        elm_object_text_set(ui->entry_rss, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_RSS]));
+        elm_object_text_set(ui->entry_cmd, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_COMMAND]));
+        elm_object_text_set(ui->entry_state, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_STATE]));
+        elm_object_text_set(ui->entry_cpu_usage, eina_strbuf_string_get(fields[PROCESS_INFO_FIELD_CPU_USAGE]));
+     }
 
    for (i = 0; i < PROCESS_INFO_FIELDS; i++)
      {
@@ -320,6 +388,8 @@ _thread_process_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *
      }
 
    eina_lock_release(&_lock);
+
+   poll_count++;
 }
 
 static void
@@ -448,6 +518,22 @@ _button_cpu_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_inf
 }
 
 static void
+_button_cpu_usage_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   Ui *ui = data;
+
+   if (ui->sort == SORT_CPU_USAGE)
+     ui->sort_reverse = !ui->sort_reverse;
+
+   _icon_sort_set(ui->button_cpu_usage, ui->sort_reverse);
+
+   ui->sort = SORT_CPU_USAGE;
+   _update_ui(ui);
+}
+
+
+
+static void
 _button_threads_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
 {
    Ui *ui = data;
@@ -527,6 +613,8 @@ ui_add(Evas_Object *parent)
    Ui *ui;
 
    ui = calloc(1, sizeof(Ui));
+   ui->poll_delay = 1;
+   ui->sort_reverse = EINA_TRUE;
 
    eina_lock_new(&_lock);
 
@@ -775,6 +863,25 @@ ui_add(Evas_Object *parent)
    evas_object_show(entry);
    elm_table_pack(table, entry, 9, 1, 1, 1);
 
+   ui->button_cpu_usage = button = elm_button_add(parent);
+   _icon_sort_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "CPU Use");
+   evas_object_show(button);
+   elm_table_pack(table, button, 10, 0, 1, 1);
+
+   ui->entry_cpu_usage = entry = elm_entry_add(parent);
+   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 0);
+   elm_entry_editable_set(entry, 0);
+   elm_entry_line_wrap_set(entry, 1);
+   evas_object_show(entry);
+   elm_table_pack(table, entry, 10, 1, 1, 1);
+
    evas_object_smart_callback_add(ui->button_pid, "clicked", _button_pid_clicked_cb, ui);
    evas_object_smart_callback_add(ui->button_uid, "clicked", _button_uid_clicked_cb, ui);
    evas_object_smart_callback_add(ui->button_nice, "clicked", _button_nice_clicked_cb, ui);
@@ -785,6 +892,7 @@ ui_add(Evas_Object *parent)
    evas_object_smart_callback_add(ui->button_rss, "clicked", _button_rss_clicked_cb, ui);
    evas_object_smart_callback_add(ui->button_cmd, "clicked", _button_cmd_clicked_cb, ui);
    evas_object_smart_callback_add(ui->button_state, "clicked", _button_state_clicked_cb, ui);
+   evas_object_smart_callback_add(ui->button_cpu_usage, "clicked", _button_cpu_usage_clicked_cb, ui);
 
    ecore_thread_feedback_run(_thread_system_run, _thread_system_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
    ecore_thread_feedback_run(_thread_process_run, _thread_process_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
