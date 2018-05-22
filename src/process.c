@@ -33,10 +33,6 @@
 #include <Ecore.h>
 #include <Ecore_File.h>
 
-#if !defined(PID_MAX)
-# define PID_MAX 99999
-#endif
-
 static const char *
 _process_state_name(char state)
 {

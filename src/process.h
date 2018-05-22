@@ -20,6 +20,10 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#if !defined(PID_MAX)
+# define PID_MAX 99999
+#endif
+
 #define CMD_NAME_MAX 256
 
 typedef struct _Process_Info 

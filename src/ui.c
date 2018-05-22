@@ -64,12 +64,8 @@ typedef struct Sys_Stats
    long   mem_used;
 } Sys_Stats;
 
-typedef struct _Cpu_Use {
-   pid_t    pid;
-   uint64_t cpu_time;
-} Pid_Cpu_Use;
-
-static Eina_List *_list_procs_usage = NULL;
+static Eina_Bool _have_cpu_times = EINA_FALSE;
+static int64_t _cpu_times[PID_MAX];
 
 static Eina_Lock _lock;
 
@@ -327,11 +323,8 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 {
    Ui *ui;
    Evas_Object *label;
-   Eina_List *list_procs, *l, *l2;
+   Eina_List *list_procs, *l;
    Process_Info *proc;
-   Pid_Cpu_Use *usage;
-   int i;
-   static int poll_count = 0;
 
    eina_lock_take(&_lock);
 
@@ -341,33 +334,21 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 
    EINA_LIST_FOREACH(list_procs, l, proc)
      {
+        int64_t time_prev = _cpu_times[proc->pid];
         proc->cpu_usage = 0;
-        EINA_LIST_FOREACH(_list_procs_usage, l2, usage)
+        if (_have_cpu_times && proc->cpu_time > time_prev)
           {
-             if (usage->pid == proc->pid && proc->cpu_time > usage->cpu_time)
-               {
-                  proc->cpu_usage = (proc->cpu_time - usage->cpu_time) / ui->poll_delay;
-                  break;
-               }
+             proc->cpu_usage = (proc->cpu_time - time_prev) / ui->poll_delay;
           }
      }
 
    list_procs = _list_procs_sort(ui, list_procs);
 
-   Eina_Bool show = EINA_FALSE;
-
-   if (_list_procs_usage || !poll_count)
-     show = EINA_TRUE;
-
    EINA_LIST_FREE(list_procs, proc)
      {
-        if (show)
-          _fields_append(ui, proc);
-
-        Pid_Cpu_Use *use = malloc(sizeof(Pid_Cpu_Use));
-        use->pid = proc->pid;
-        use->cpu_time = proc->cpu_time;
-        _list_procs_usage = eina_list_append(_list_procs_usage, use);
+        _fields_append(ui, proc);
+        _have_cpu_times = EINA_TRUE;
+        _cpu_times[proc->pid] = proc->cpu_time;
 
         free(proc);
      }
@@ -375,23 +356,8 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
    if (list_procs)
      eina_list_free(list_procs);
 
-   if (poll_count % 2)
-     {
-        EINA_LIST_FREE(_list_procs_usage, usage)
-          {
-             free(usage);
-          }
-        eina_list_free(_list_procs_usage);
-        _list_procs_usage =  NULL;
-     }
-
-   if (show)
-     {
-        _fields_show(ui, proc);
-        _fields_clear(ui);
-     }
-
-   poll_count++;
+   _fields_show(ui, proc);
+   _fields_clear(ui);
 
    eina_lock_release(&_lock);
 }
@@ -642,6 +608,7 @@ ui_add(Evas_Object *parent)
         ui->fields[i] = eina_strbuf_new();
      }
 
+   memset(&_cpu_times, 0, PID_MAX * sizeof(int64_t));
    eina_lock_new(&_lock);
 
    box = elm_box_add(parent);
