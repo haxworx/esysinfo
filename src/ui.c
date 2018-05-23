@@ -254,6 +254,13 @@ _list_procs_sort(Ui *ui, Eina_List *list_procs)
 }
 
 static void
+_conversions_apply(Ui *ui, Proc_Stats *proc)
+{
+   proc->mem_size >>= 10;
+   proc->mem_rss >>= 10;
+}
+
+static void
 _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg EINA_UNUSED)
 {
    Ui *ui;
@@ -268,9 +275,8 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 
    EINA_LIST_FOREACH (list_procs, l, proc)
      {
-        proc->mem_size >>= 10;
-        proc->mem_rss >>= 10;
         int64_t time_prev = ui->cpu_times[proc->pid];
+        _conversions_apply(ui, proc);
         proc->cpu_usage = 0;
         if (!ui->first_run && proc->cpu_time > time_prev)
           {
@@ -529,8 +535,7 @@ void
 ui_add(Evas_Object *parent)
 {
    Evas_Object *box, *hbox, *frame, *table;
-   Evas_Object *progress_cpu, *progress_mem, *list;
-   Evas_Object *button, *entry, *icon;
+   Evas_Object *progress, *button, *entry, *icon;
    Ecore_Thread *thread;
    Ui *ui;
 
@@ -567,13 +572,13 @@ ui_add(Evas_Object *parent)
    elm_box_pack_end(hbox, frame);
    evas_object_show(frame);
 
-   ui->progress_cpu = progress_cpu = elm_progressbar_add(parent);
-   evas_object_size_hint_align_set(progress_cpu, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   evas_object_size_hint_weight_set(progress_cpu, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   elm_progressbar_span_size_set(progress_cpu, 1.0);
-   elm_progressbar_unit_format_set(progress_cpu, "%1.2f%%");
-   elm_object_content_set(frame, progress_cpu);
-   evas_object_show(progress_cpu);
+   ui->progress_cpu = progress = elm_progressbar_add(parent);
+   evas_object_size_hint_align_set(progress, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   evas_object_size_hint_weight_set(progress, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   elm_progressbar_span_size_set(progress, 1.0);
+   elm_progressbar_unit_format_set(progress, "%1.2f%%");
+   elm_object_content_set(frame, progress);
+   evas_object_show(progress);
 
    frame = elm_frame_add(hbox);
    evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -582,13 +587,13 @@ ui_add(Evas_Object *parent)
    elm_box_pack_end(hbox, frame);
    evas_object_show(frame);
 
-   ui->progress_mem = progress_mem = elm_progressbar_add(parent);
-   evas_object_size_hint_align_set(progress_mem, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   evas_object_size_hint_weight_set(progress_mem, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   elm_progressbar_span_size_set(progress_mem, 1.0);
-   elm_progressbar_unit_format_function_set(progress_mem, _progress_mem_format_cb, _progress_mem_format_free_cb);
-   elm_object_content_set(frame, progress_mem);
-   evas_object_show(progress_mem);
+   ui->progress_mem = progress = elm_progressbar_add(parent);
+   evas_object_size_hint_align_set(progress, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   evas_object_size_hint_weight_set(progress, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   elm_progressbar_span_size_set(progress, 1.0);
+   elm_progressbar_unit_format_function_set(progress, _progress_mem_format_cb, _progress_mem_format_free_cb);
+   elm_object_content_set(frame, progress);
+   evas_object_show(progress);
 
    table = elm_table_add(parent);
    evas_object_size_hint_weight_set(table, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
