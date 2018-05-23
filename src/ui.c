@@ -301,8 +301,6 @@ _thread_overview_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void 
         free(proc);
      }
 
-   elm_list_go(ui->list_pid);
-
    if (list_procs)
      eina_list_free(list_procs);
 
@@ -547,6 +545,12 @@ _btn_quit_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
 }
 
 static void
+_btn_about_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   printf("(c) Copyright 2018. Alastair Poole <netstar@gmail.com>\n");
+}
+
+static void
 _thread_proc_pid_stats(void *data, Ecore_Thread *thread)
 {
    Ui *ui = data;
@@ -554,7 +558,7 @@ _thread_proc_pid_stats(void *data, Ecore_Thread *thread)
    while (1)
      {
         ecore_thread_feedback(thread, ui);
-        sleep(60);
+        sleep(30);
      }
 }
 
@@ -583,7 +587,7 @@ _thread_proc_pid_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 }
 
 Eina_Bool
-_list_pids_poll(void *data)
+_list_pid_poll(void *data)
 {
    Ui *ui;
    struct passwd *pwd_entry;
@@ -664,9 +668,9 @@ _list_clicked_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 
    ui->selected_pid = atoi(text);
 
-   _list_pids_poll(ui);
+   _list_pid_poll(ui);
 
-   ui->timer_pid = ecore_timer_add(ui->poll_delay, _list_pids_poll, ui);
+   ui->timer_pid = ecore_timer_add(ui->poll_delay, _list_pid_poll, ui);
 }
 
 static void
@@ -1292,6 +1296,7 @@ _ui_process_list_add(Evas_Object *parent, Ui *ui)
    elm_object_text_set(button, "About");
    elm_box_pack_end(hbox, button);
    evas_object_show(button);
+   evas_object_smart_callback_add(button, "clicked", _btn_about_clicked_cb, NULL);
 
    button = elm_button_add(parent);
    evas_object_size_hint_weight_set(button, 0.5, 0);
