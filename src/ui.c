@@ -267,7 +267,7 @@ _conversions_apply(Ui *ui, Proc_Stats *proc)
 }
 
 static void
-_thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg EINA_UNUSED)
+_thread_overview_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg EINA_UNUSED)
 {
    Ui *ui;
    Eina_List *list_procs, *l;
@@ -315,11 +315,11 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 static void
 _ui_refresh(Ui *ui)
 {
-   _thread_proc_feedback_cb(ui, NULL, NULL);
+   _thread_overview_feedback_cb(ui, NULL, NULL);
 }
 
 static void
-_thread_proc_stats(void *data, Ecore_Thread *thread)
+_thread_overview(void *data, Ecore_Thread *thread)
 {
    Ui *ui = data;
 
@@ -616,9 +616,9 @@ _list_pids_poll(void *data)
    elm_object_text_set(ui->entry_pid_cpu, buf);
    snprintf(buf, sizeof(buf), "%d", proc->numthreads);
    elm_object_text_set(ui->entry_pid_threads, buf);
-   snprintf(buf, sizeof(buf), "%ld", proc->mem_size);
+   snprintf(buf, sizeof(buf), "%ld bytes", proc->mem_size);
    elm_object_text_set(ui->entry_pid_size, buf);
-   snprintf(buf, sizeof(buf), "%d", proc->mem_rss);
+   snprintf(buf, sizeof(buf), "%ld bytes", proc->mem_rss);
    elm_object_text_set(ui->entry_pid_rss, buf);
    snprintf(buf, sizeof(buf), "%d", proc->nice);
    elm_object_text_set(ui->entry_pid_nice, buf);
@@ -1318,7 +1318,7 @@ ui_add(Evas_Object *parent)
    _ui_process_list_add(parent, ui);
 
    ecore_thread_feedback_run(_thread_sys_stats, _thread_sys_stats_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
-   ecore_thread_feedback_run(_thread_proc_stats, _thread_proc_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
+   ecore_thread_feedback_run(_thread_overview, _thread_overview_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
    ecore_thread_feedback_run(_thread_proc_pid_stats, _thread_proc_pid_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
 }
 
