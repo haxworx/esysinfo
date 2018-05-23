@@ -628,6 +628,7 @@ _list_pids_poll(void *data)
    elm_object_text_set(ui->entry_pid_state, buf);
 
    time_prev = ui->cpu_times[proc->pid];
+
    cpu_usage = 0;
    if (!ui->first_run && proc->cpu_time > time_prev)
      {
