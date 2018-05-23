@@ -21,10 +21,10 @@ _win_add(void)
    elm_icon_standard_set(icon, "system-preferences");
    elm_win_icon_object_set(win, icon);
 
-   evas_object_resize(win, 700 * elm_config_scale_get(), 700 * elm_config_scale_get());
+   evas_object_resize(win, 600 * elm_config_scale_get(), 400 * elm_config_scale_get());
    evas_object_smart_callback_add(win, "delete,request", _win_del_cb, NULL);
 
-   elm_win_title_set(win, "Bogotronic Engineer");
+   elm_win_title_set(win, "System Information");
 
    return win;
 }

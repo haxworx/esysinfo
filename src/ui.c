@@ -707,7 +707,7 @@ _ui_process_list_add(Evas_Object *parent, Ui *ui)
 {
    Evas_Object *box, *hbox, *frame, *table;
    Evas_Object *progress, *button, *entry, *icon;
-   Evas_Object *list, *label;
+   Evas_Object *panel, *list, *label;
 
    box = elm_box_add(parent);
    evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -988,11 +988,19 @@ _ui_process_list_add(Evas_Object *parent, Ui *ui)
 
    /* End of system information and process list overview */
 
+   panel = elm_panel_add(parent);
+   evas_object_size_hint_weight_set(panel, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(panel, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_panel_orient_set(panel, ELM_PANEL_ORIENT_LEFT);
+   elm_panel_toggle(panel);
+   elm_object_content_set(parent, panel);
+   evas_object_show(panel);
+
    hbox = elm_box_add(parent);
    evas_object_size_hint_weight_set(hbox, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(hbox, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_box_horizontal_set(hbox, EINA_TRUE);
-   elm_box_pack_end(box, hbox);
+   elm_object_content_set(panel, hbox);
    evas_object_show(hbox);
 
    frame = elm_frame_add(hbox);
@@ -1149,11 +1157,10 @@ _ui_process_list_add(Evas_Object *parent, Ui *ui)
    elm_entry_line_wrap_set(entry, 1);
    elm_table_pack(table, entry, 1, 6, 1, 1);
 
-
    label = elm_label_add(parent);
    evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_object_text_set(label, "Total RSS memory:");
+   elm_object_text_set(label, " Reserved memory:");
    evas_object_show(label);
    elm_table_pack(table, label, 0, 7, 1, 1);
 
