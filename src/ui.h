@@ -48,7 +48,25 @@ typedef struct Ui
    Evas_Object *btn_state;
    Evas_Object *btn_cpu_usage;
 
+   Evas_Object *entry_pid_cmd;
+   Evas_Object *entry_pid_user;
+   Evas_Object *entry_pid_pid;
+   Evas_Object *entry_pid_uid;
+   Evas_Object *entry_pid_cpu;
+   Evas_Object *entry_pid_threads;
+   Evas_Object *entry_pid_size;
+   Evas_Object *entry_pid_rss;
+   Evas_Object *entry_pid_nice;
+   Evas_Object *entry_pid_pri;
+   Evas_Object *entry_pid_state;
+   Evas_Object *entry_pid_cpu_usage;
+
+   Ecore_Timer *timer_pid;
+   pid_t        selected_pid;
+
    Eina_Strbuf *fields[PROCESS_INFO_FIELDS];
+
+   Evas_Object *list_pid;
 
    Eina_Bool    first_run;
    int64_t      cpu_times[PID_MAX];

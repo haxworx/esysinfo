@@ -2,6 +2,8 @@
 #include "process.h"
 #include "ui.h"
 #include <stdio.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 static Eina_Lock _lock;
 
@@ -151,10 +153,12 @@ _fields_append(Ui *ui, Proc_Stats *proc)
 {
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PID], "%d <br>", proc->pid);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
+   /*
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_NICE], "%d <br>", proc->nice);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PRI], "%d <br>", proc->priority);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_CPU], "%d <br>", proc->cpu_id);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_THREADS], "%d <br>", proc->numthreads);
+   */
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_SIZE], "%ld K<br>", proc->mem_size);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_RSS], "%ld K<br>", proc->mem_rss);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_COMMAND], "%s <br>", proc->command);
@@ -167,10 +171,12 @@ _fields_show(Ui *ui, Proc_Stats *proc)
 {
    elm_object_text_set(ui->entry_pid, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_PID]));
    elm_object_text_set(ui->entry_uid, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_UID]));
+   /*
    elm_object_text_set(ui->entry_nice, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_NICE]));
    elm_object_text_set(ui->entry_pri, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_PRI]));
    elm_object_text_set(ui->entry_cpu, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_CPU]));
    elm_object_text_set(ui->entry_threads, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_THREADS]));
+   */
    elm_object_text_set(ui->entry_size, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_SIZE]));
    elm_object_text_set(ui->entry_rss, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_RSS]));
    elm_object_text_set(ui->entry_cmd, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_COMMAND]));
@@ -294,6 +300,8 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 
         free(proc);
      }
+
+   elm_list_go(ui->list_pid);
 
    if (list_procs)
      eina_list_free(list_procs);
@@ -531,26 +539,174 @@ _btn_state_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
    _ui_refresh(ui);
 }
 
-void
-ui_add(Evas_Object *parent)
+static void
+_btn_quit_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   ecore_main_loop_quit();
+   elm_exit();
+}
+
+static void
+_thread_proc_pid_stats(void *data, Ecore_Thread *thread)
+{
+   Ui *ui = data;
+
+   while (1)
+     {
+        ecore_thread_feedback(thread, ui);
+        sleep(60);
+     }
+}
+
+static void
+_thread_proc_pid_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
+{
+   Proc_Stats *proc;
+   Eina_List *proc_list;
+   Ui *ui = msg;
+   char buf[64];
+
+   proc_list = proc_info_all_get();
+   proc_list = eina_list_sort(proc_list, eina_list_count(proc_list), _sort_by_pid);
+
+   elm_list_clear(ui->list_pid);
+
+   EINA_LIST_FREE(proc_list, proc)
+     {
+        snprintf(buf, sizeof(buf), "%d", proc->pid);
+        elm_list_item_append(ui->list_pid, buf, NULL, NULL, NULL, NULL);
+        free(proc);
+     }
+
+   if (proc_list)
+     eina_list_free(proc_list);
+}
+
+Eina_Bool
+_list_pids_poll(void *data)
+{
+   Ui *ui;
+   struct passwd *pwd_entry;
+   Proc_Stats *proc;
+   double cpu_usage;
+   int64_t time_prev;
+   char buf[1024];
+
+   ui = data;
+
+   proc = proc_info_by_pid(ui->selected_pid);
+   if (!proc)
+     {
+        _thread_proc_pid_feedback_cb(NULL, NULL, ui);
+
+        return ECORE_CALLBACK_CANCEL;
+     }
+
+   elm_object_text_set(ui->entry_pid_cmd, proc->command);
+   snprintf(buf, sizeof(buf), "%d", proc->pid);
+
+   pwd_entry = getpwuid(proc->uid);
+   if (pwd_entry)
+     elm_object_text_set(ui->entry_pid_user, pwd_entry->pw_name);
+
+   elm_object_text_set(ui->entry_pid_pid, buf);
+   snprintf(buf, sizeof(buf), "%d", proc->uid);
+   elm_object_text_set(ui->entry_pid_uid, buf);
+   snprintf(buf, sizeof(buf), "%d", proc->cpu_id);
+   elm_object_text_set(ui->entry_pid_cpu, buf);
+   snprintf(buf, sizeof(buf), "%d", proc->numthreads);
+   elm_object_text_set(ui->entry_pid_threads, buf);
+   snprintf(buf, sizeof(buf), "%ld", proc->mem_size);
+   elm_object_text_set(ui->entry_pid_size, buf);
+   snprintf(buf, sizeof(buf), "%d", proc->mem_rss);
+   elm_object_text_set(ui->entry_pid_rss, buf);
+   snprintf(buf, sizeof(buf), "%d", proc->nice);
+   elm_object_text_set(ui->entry_pid_nice, buf);
+   snprintf(buf, sizeof(buf), "%d", proc->priority);
+   elm_object_text_set(ui->entry_pid_pri, buf);
+   snprintf(buf, sizeof(buf), "%s", proc->state);
+   elm_object_text_set(ui->entry_pid_state, buf);
+
+   time_prev = ui->cpu_times[proc->pid];
+   cpu_usage = 0;
+   if (!ui->first_run && proc->cpu_time > time_prev)
+     {
+        cpu_usage = (proc->cpu_time - time_prev) / ui->poll_delay;
+     }
+
+   snprintf(buf, sizeof(buf), "%.0f%%", cpu_usage);
+   elm_object_text_set(ui->entry_pid_cpu_usage, buf);
+
+   free(proc);
+
+   return ECORE_CALLBACK_RENEW;
+}
+
+static void
+_list_clicked_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
+{
+   Elm_Object_Item *it;
+   Ui *ui;
+   const char *text;
+
+   ui = data;
+
+   it = elm_list_selected_item_get(obj);
+
+   text = elm_object_item_text_get(it);
+
+   if (ui->timer_pid)
+     {
+        ecore_timer_del(ui->timer_pid);
+        ui->timer_pid = NULL;
+     }
+
+   ui->selected_pid = atoi(text);
+
+   _list_pids_poll(ui);
+
+   ui->timer_pid = ecore_timer_add(ui->poll_delay, _list_pids_poll, ui);
+}
+
+static void
+_btn_start_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   Ui *ui = data;
+
+   if (ui->selected_pid == -1)
+     return;
+
+   kill(ui->selected_pid, SIGCONT);
+}
+
+static void
+_btn_stop_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   Ui *ui = data;
+
+   if (ui->selected_pid == -1)
+     return;
+
+   kill(ui->selected_pid, SIGSTOP);
+}
+
+static void
+_btn_kill_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   Ui *ui = data;
+
+   if (ui->selected_pid == -1)
+     return;
+
+   kill(ui->selected_pid, SIGKILL);
+}
+
+static void
+_ui_process_list_add(Evas_Object *parent, Ui *ui)
 {
    Evas_Object *box, *hbox, *frame, *table;
    Evas_Object *progress, *button, *entry, *icon;
-   Ecore_Thread *thread;
-   Ui *ui;
-
-   ui = calloc(1, sizeof(Ui));
-   ui->first_run = EINA_TRUE;
-   ui->poll_delay = 2;
-   ui->sort_reverse = EINA_TRUE;
-   memset(ui->cpu_times, 0, PID_MAX * sizeof(int64_t));
-
-   for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
-     {
-        ui->fields[i] = eina_strbuf_new();
-     }
-
-   eina_lock_new(&_lock);
+   Evas_Object *list, *label;
 
    box = elm_box_add(parent);
    evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -608,9 +764,9 @@ ui_add(Evas_Object *parent)
    elm_object_content_set(scroller, table);
 
    frame = elm_frame_add(box);
-   evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, 0.5);//EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_object_text_set(frame, "Process Information");
+   elm_object_text_set(frame, "System Overview");
    elm_box_pack_end(box, frame);
    evas_object_show(frame);
    elm_object_content_set(frame, scroller);
@@ -651,6 +807,7 @@ ui_add(Evas_Object *parent)
    evas_object_show(entry);
    elm_table_pack(table, entry, 1, 1, 1, 1);
 
+/*
    ui->btn_nice = button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
@@ -724,7 +881,7 @@ ui_add(Evas_Object *parent)
    elm_entry_editable_set(entry, 0);
    evas_object_show(entry);
    elm_table_pack(table, entry, 5, 1, 1, 1);
-
+*/
    ui->btn_size = button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
@@ -828,7 +985,339 @@ ui_add(Evas_Object *parent)
    evas_object_smart_callback_add(ui->btn_state, "clicked", _btn_state_clicked_cb, ui);
    evas_object_smart_callback_add(ui->btn_cpu_usage, "clicked", _btn_cpu_usage_clicked_cb, ui);
 
+   /* End of system information and process list overview */
+
+   hbox = elm_box_add(parent);
+   evas_object_size_hint_weight_set(hbox, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(hbox, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_box_horizontal_set(hbox, EINA_TRUE);
+   elm_box_pack_end(box, hbox);
+   evas_object_show(hbox);
+
+   frame = elm_frame_add(hbox);
+   evas_object_size_hint_weight_set(frame, 0.2, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(frame, "PID");
+   elm_box_pack_end(hbox, frame);
+   evas_object_show(frame);
+
+   ui->list_pid = list = elm_list_add(frame);
+   evas_object_size_hint_weight_set(list, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   evas_object_size_hint_align_set(list, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   evas_object_show(list);
+   elm_object_content_set(frame, list);
+   evas_object_smart_callback_add(ui->list_pid, "selected", _list_clicked_cb, ui);
+
+   frame = elm_frame_add(box);
+   evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(frame, "Process Statistics");
+   elm_box_pack_end(hbox, frame);
+   evas_object_show(frame);
+
+   table = elm_table_add(parent);
+   evas_object_size_hint_weight_set(table, 0.5, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_table_padding_set(table, 3, 3);
+   evas_object_show(table);
+
+   scroller = elm_scroller_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
+   evas_object_show(scroller);
+   elm_object_content_set(scroller, table);
+   elm_object_content_set(frame, scroller);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "Name:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 0, 1, 1);
+
+   ui->entry_pid_cmd = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 0, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "PID:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 1, 1, 1);
+
+   ui->entry_pid_pid = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 1, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "Username:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 2, 1, 1);
+
+   ui->entry_pid_user = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 2, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "UID:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 3, 1, 1);
+
+   ui->entry_pid_uid = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 3, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "CPU #:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 4, 1, 1);
+
+   ui->entry_pid_cpu = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 4, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "Threads:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 5, 1, 1);
+
+   ui->entry_pid_threads = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 5, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "Total memory:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 6, 1, 1);
+
+   ui->entry_pid_size = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 6, 1, 1);
+
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "Total RSS memory:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 7, 1, 1);
+
+   ui->entry_pid_rss = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 7, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "Nice:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 8, 1, 1);
+
+   ui->entry_pid_nice = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 8, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "Priority:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 9, 1, 1);
+
+   ui->entry_pid_pri = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 9, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "State:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 10, 1, 1);
+
+   ui->entry_pid_state = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 10, 1, 1);
+
+   label = elm_label_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(label, "CPU %:");
+   evas_object_show(label);
+   elm_table_pack(table, label, 0, 11, 1, 1);
+
+   ui->entry_pid_cpu_usage = entry = elm_entry_add(parent);
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_entry_line_wrap_set(entry, 1);
+   elm_table_pack(table, entry, 1, 11, 1, 1);
+
+   hbox = elm_box_add(parent);
+   evas_object_size_hint_weight_set(hbox, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(hbox, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_box_horizontal_set(hbox, EINA_TRUE);
+   evas_object_show(hbox);
+   elm_table_pack(table, hbox, 1, 12, 1, 1);
+
+   button = elm_button_add(parent);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "Stop Process");
+   elm_box_pack_end(hbox, button);
+   evas_object_show(button);
+   evas_object_smart_callback_add(button, "clicked", _btn_stop_clicked_cb, ui);
+
+   button = elm_button_add(parent);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "Start Process");
+   elm_box_pack_end(hbox, button);
+   evas_object_smart_callback_add(button, "clicked", _btn_start_clicked_cb, ui);
+   evas_object_show(button);
+
+   button = elm_button_add(parent);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "Kill Process");
+   elm_box_pack_end(hbox, button);
+   evas_object_show(button);
+   evas_object_smart_callback_add(button, "clicked", _btn_kill_clicked_cb, ui);
+
+   hbox = elm_box_add(parent);
+   evas_object_size_hint_weight_set(hbox, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(hbox, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_box_horizontal_set(hbox, EINA_TRUE);
+   evas_object_show(hbox);
+   elm_box_pack_end(box, hbox);
+
+   box = elm_box_add(parent);
+   evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(hbox, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_box_horizontal_set(box, EINA_TRUE);
+   elm_box_pack_end(hbox, box);
+
+   button = elm_button_add(parent);
+   evas_object_size_hint_weight_set(button, 0.5, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0);
+   elm_object_text_set(button, "About");
+   elm_box_pack_end(hbox, button);
+   evas_object_show(button);
+
+   button = elm_button_add(parent);
+   evas_object_size_hint_weight_set(button, 0.5, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0);
+   elm_object_text_set(button, "Quit");
+   elm_box_pack_end(hbox, button);
+   evas_object_show(button);
+   evas_object_smart_callback_add(button, "clicked", _btn_quit_clicked_cb, ui);
+}
+
+void
+ui_add(Evas_Object *parent)
+{
+   Ecore_Thread *thread;
+   Ui *ui;
+
+   ui = calloc(1, sizeof(Ui));
+   ui->first_run = EINA_TRUE;
+   ui->poll_delay = 2;
+   ui->sort_reverse = EINA_TRUE;
+   ui->selected_pid = -1;
+   memset(ui->cpu_times, 0, PID_MAX * sizeof(int64_t));
+
+   for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
+     {
+        ui->fields[i] = eina_strbuf_new();
+     }
+
+   eina_lock_new(&_lock);
+
+   _ui_process_list_add(parent, ui);
+
    ecore_thread_feedback_run(_thread_sys_stats, _thread_sys_stats_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
    ecore_thread_feedback_run(_thread_proc_stats, _thread_proc_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
+   ecore_thread_feedback_run(_thread_proc_pid_stats, _thread_proc_pid_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
 }
 
