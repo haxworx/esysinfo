@@ -155,8 +155,8 @@ _fields_append(Ui *ui, Proc_Stats *proc)
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PRI], "%d <br>", proc->priority);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_CPU], "%d <br>", proc->cpu_id);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_THREADS], "%d <br>", proc->numthreads);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_SIZE], "%u K<br>", proc->mem_size >> 10);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_RSS], "%u K<br>", proc->mem_rss >> 10);
+   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_SIZE], "%ld K<br>", proc->mem_size);
+   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_RSS], "%ld K<br>", proc->mem_rss);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_COMMAND], "%s <br>", proc->command);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_STATE], "%s <br>", proc->state);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], "%.0f%% <br>", proc->cpu_usage);
@@ -268,6 +268,8 @@ _thread_proc_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg
 
    EINA_LIST_FOREACH (list_procs, l, proc)
      {
+        proc->mem_size >>= 10;
+        proc->mem_rss >>= 10;
         int64_t time_prev = ui->cpu_times[proc->pid];
         proc->cpu_usage = 0;
         if (!ui->first_run && proc->cpu_time > time_prev)
