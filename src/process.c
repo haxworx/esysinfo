@@ -443,7 +443,7 @@ proc_info_by_pid(int pid)
    if (sysctlnametomib("kern.proc.pid", mib, &len) == -1)
      return NULL;
 
-   mib[4] = pid;
+   mib[3] = pid;
 
    len = sizeof(kp);
    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1)
