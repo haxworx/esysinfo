@@ -21,6 +21,8 @@ typedef enum
 
 typedef struct Ui
 {
+   Evas_Object *win;
+
    Evas_Object *progress_cpu;
    Evas_Object *progress_mem;
 
@@ -75,6 +77,7 @@ typedef struct Ui
 
    Sort_Type    sort_type;
    Eina_Bool    sort_reverse;
+
 } Ui;
 
 typedef struct Sys_Stats

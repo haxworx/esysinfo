@@ -32,6 +32,9 @@ _thread_sys_stats_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    Ui *ui = data;
    Sys_Stats *sys = msg;
 
+   if (ecore_thread_check(thread))
+     return;
+
    elm_progressbar_value_set(ui->progress_cpu, (double)sys->cpu_usage / 100);
    elm_progressbar_value_set(ui->progress_mem, (double)((sys->mem_total / 100.0) * sys->mem_used) / 1000000);
 
@@ -272,6 +275,9 @@ _thread_overview_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void 
    Ui *ui;
    Eina_List *list_procs, *l;
    Proc_Stats *proc;
+
+   if (ecore_thread_check(thread))
+     return;
 
    eina_lock_take(&_lock);
 
@@ -540,13 +546,22 @@ _btn_state_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
 static void
 _btn_quit_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
 {
+   Ui *ui = data;
+
    ecore_main_loop_quit();
+
    elm_exit();
 }
 
 static void
 _btn_about_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
 {
+   Ui *ui;
+   Evas_Object *win;
+
+   ui = data;
+   win = ui->win;
+
    printf("(c) Copyright 2018. Alastair Poole <netstar@gmail.com>\n");
 }
 
@@ -558,6 +573,9 @@ _thread_proc_pid_stats(void *data, Ecore_Thread *thread)
    while (1)
      {
         ecore_thread_feedback(thread, ui);
+        if (ecore_thread_check(thread))
+          return;
+
         sleep(30);
      }
 }
@@ -1291,15 +1309,7 @@ _ui_process_list_add(Evas_Object *parent, Ui *ui)
    elm_box_pack_end(hbox, box);
 
    button = elm_button_add(parent);
-   evas_object_size_hint_weight_set(button, 0.5, 0);
-   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0);
-   elm_object_text_set(button, "About");
-   elm_box_pack_end(hbox, button);
-   evas_object_show(button);
-   evas_object_smart_callback_add(button, "clicked", _btn_about_clicked_cb, NULL);
-
-   button = elm_button_add(parent);
-   evas_object_size_hint_weight_set(button, 0.5, 0);
+   evas_object_size_hint_weight_set(button, 0.2, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0);
    elm_object_text_set(button, "Quit");
    elm_box_pack_end(hbox, button);
@@ -1314,6 +1324,7 @@ ui_add(Evas_Object *parent)
    Ui *ui;
 
    ui = calloc(1, sizeof(Ui));
+   ui->win = parent;
    ui->first_run = EINA_TRUE;
    ui->poll_delay = 2;
    ui->sort_reverse = EINA_TRUE;
