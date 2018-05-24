@@ -65,6 +65,7 @@ typedef struct Ui
 
    Ecore_Timer *timer_pid;
    pid_t        selected_pid;
+   pid_t        program_pid;
 
    Eina_Strbuf *fields[PROCESS_INFO_FIELDS];
 

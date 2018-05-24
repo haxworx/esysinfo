@@ -154,6 +154,11 @@ _sort_by_state(const void *p1, const void *p2)
 static void
 _fields_append(Ui *ui, Proc_Stats *proc)
 {
+   // FIXME: hiding self from the list until more efficient.
+   // It's not too bad but it pollutes a lovely list.
+   if (ui->program_pid == proc->pid)
+     return;
+
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PID], "%d <br>", proc->pid);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
    /*
@@ -1329,6 +1334,8 @@ ui_add(Evas_Object *parent)
    ui->poll_delay = 2;
    ui->sort_reverse = EINA_TRUE;
    ui->selected_pid = -1;
+   ui->program_pid = getpid();
+
    memset(ui->cpu_times, 0, PID_MAX * sizeof(int64_t));
 
    for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
