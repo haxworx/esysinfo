@@ -417,6 +417,7 @@ _process_list_macos_get(void)
 
         snprintf(p->command, sizeof(p->command), "%s", kp.kp_proc.p_comm);
         p->cpu_time = taskinfo.pti_total_user + taskinfo.pti_total_system;
+        p->cpu_time /= 10000000;
         p->state = _process_state_name(kp.kp_proc.p_stat);
         p->mem_size = taskinfo.pti_virtual_size;
         p->mem_rss = taskinfo.pti_resident_size;
