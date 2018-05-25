@@ -416,22 +416,11 @@ Proc_Stats *
 proc_info_by_pid(int pid)
 {
    struct kinfo_proc kp;
-   struct proc_taskinfo taskinfo;
+   struct proc_taskallinfo taskinfo;
    struct proc_workqueueinfo workqueue;
-   size_t len;
-   int size, mib[6];
+   size_t size;
 
-   len = sizeof(int);
-   if (sysctlnametomib("kern.proc.pid", mib, &len) == -1)
-     return NULL;
-
-   mib[3] = pid;
-
-   len = sizeof(kp);
-   if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1)
-     return NULL;
-
-   size = proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &taskinfo, sizeof(taskinfo));
+   size = proc_pidinfo(pid, PROC_PIDTASKALLINFO, 0, &taskinfo, sizeof(taskinfo));
    if (size != sizeof(taskinfo))
      return NULL;
 
@@ -440,18 +429,18 @@ proc_info_by_pid(int pid)
      return NULL;
 
    Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
-   p->pid = kp.kp_proc.p_pid;
-   p->uid = kp.kp_eproc.e_ucred.cr_uid;
+   p->pid = pid;
+   p->uid = taskinfo.pbsd.pbi_uid;
    p->cpu_id = workqueue.pwq_nthreads;
-   snprintf(p->command, sizeof(p->command), "%s", kp.kp_proc.p_comm);
-   p->cpu_time = taskinfo.pti_total_user + taskinfo.pti_total_system;
+   snprintf(p->command, sizeof(p->command), "%s", taskinfo.pbsd.pbi_comm);
+   p->cpu_time = taskinfo.ptinfo.pti_total_user + taskinfo.ptinfo.pti_total_system;
    p->cpu_time /= 10000000;
-   p->state = _process_state_name(kp.kp_proc.p_stat);
-   p->mem_size = taskinfo.pti_virtual_size;
-   p->mem_rss = taskinfo.pti_resident_size;
-   p->priority = kp.kp_proc.p_priority;
-   p->nice = kp.kp_proc.p_nice;
-   p->numthreads = taskinfo.pti_threadnum;
+   p->state = _process_state_name(taskinfo.pbsd.pbi_status);
+   p->mem_size = taskinfo.ptinfo.pti_virtual_size;
+   p->mem_rss = taskinfo.ptinfo.pti_resident_size;
+   p->priority = taskinfo.ptinfo.pti_priority;
+   p->nice = taskinfo.pbsd.pbi_nice;
+   p->numthreads = taskinfo.ptinfo.pti_threadnum;
 
    return p;
 }
