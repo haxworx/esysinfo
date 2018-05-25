@@ -14,16 +14,25 @@ static void
 _system_stats(void *data, Ecore_Thread *thread)
 {
    Sys_Stats *sys;
-   Ui *ui = data;
+   Ui *ui;
+   int i;
+
+   ui = data;
 
    while (1)
      {
-        if (ecore_thread_check(thread))
-          return;
         sys = malloc(sizeof(Sys_Stats));
         sys->cpu_count = system_cpu_memory_get(&sys->cpu_usage, &sys->mem_total, &sys->mem_used);
+
         ecore_thread_feedback(thread, sys);
-        sleep(ui->poll_delay);
+
+        for (i = 0; i < ui->poll_delay; i++)
+           {
+              if (ecore_thread_check(thread))
+                return;
+
+              sleep(1);
+           }
      }
 }
 
@@ -326,11 +335,10 @@ _process_stats_list(void *data, Ecore_Thread *thread)
 
    while (1)
      {
+        ecore_thread_feedback(thread, ui);
+        sleep(ui->poll_delay);
         if (ecore_thread_check(thread))
           break;
-        ecore_thread_feedback(thread, ui);
-
-        sleep(ui->poll_delay);
      }
 }
 
@@ -573,10 +581,12 @@ _pid_list(void *data, Ecore_Thread *thread)
    while (1)
      {
         ecore_thread_feedback(thread, ui);
+
         for (i = 0; i < 30; i++)
           {
              if (ecore_thread_check(thread))
                return;
+
              sleep(1);
           }
      }
