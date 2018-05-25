@@ -49,9 +49,6 @@ _system_stats_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    ui = data;
    sys = msg;
 
-   if (ecore_thread_check(thread))
-     return;
-
    _memory_total = sys->mem_total >>= 10;
    _memory_used = sys->mem_used >>= 10;
 
