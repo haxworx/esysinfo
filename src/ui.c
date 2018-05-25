@@ -223,6 +223,7 @@ _list_sort(Ui *ui, Eina_List *list)
 {
    switch (ui->sort_type)
      {
+      case SORT_BY_NONE:
       case SORT_BY_PID:
         list = eina_list_sort(list, eina_list_count(list), _sort_by_pid);
         break;
@@ -263,7 +264,6 @@ _list_sort(Ui *ui, Eina_List *list)
         list = eina_list_sort(list, eina_list_count(list), _sort_by_state);
         break;
 
-      case SORT_BY_NONE:
       case SORT_BY_CPU_USAGE:
         list = eina_list_sort(list, eina_list_count(list), _sort_by_cpu_usage);
         break;
@@ -597,9 +597,18 @@ _pid_list(void *data, Ecore_Thread *thread)
 }
 
 static void
+_list_item_del_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   pid_t *pid = data;
+
+   free(pid);
+}
+
+static void
 _pid_list_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 {
    Proc_Stats *proc;
+   Elm_Widget_Item *item;
    Eina_List *list;
    Ui *ui = msg;
    char buf[64];
@@ -612,7 +621,13 @@ _pid_list_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    EINA_LIST_FREE(list, proc)
      {
         snprintf(buf, sizeof(buf), "%d", proc->pid);
-        elm_list_item_append(ui->list_pid, buf, NULL, NULL, NULL, NULL);
+
+        pid_t *pid = malloc(sizeof(pid_t));
+        *pid = proc->pid;
+
+        item = elm_list_item_append(ui->list_pid, buf, NULL, NULL, NULL, pid);
+        elm_object_item_del_cb_set(item, _list_item_del_cb);
+
         free(proc);
      }
 
@@ -624,6 +639,8 @@ static Eina_Bool
 _pid_list_poll(void *data)
 {
    Ui *ui;
+   const Eina_List *l, *list;
+   Elm_Widget_Item *it;
    struct passwd *pwd_entry;
    Proc_Stats *proc;
    double cpu_usage;
@@ -638,6 +655,17 @@ _pid_list_poll(void *data)
         _pid_list_feedback_cb(NULL, NULL, ui);
 
         return ECORE_CALLBACK_CANCEL;
+     }
+
+   list = elm_list_items_get(ui->list_pid);
+   EINA_LIST_FOREACH(list, l, it)
+     {
+         pid_t *pid = elm_object_item_data_get(it);
+         if (pid && *pid == ui->selected_pid)
+           {
+              elm_list_item_selected_set(it, EINA_TRUE);
+              break;
+           }
      }
 
    elm_object_text_set(ui->entry_pid_cmd, proc->command);
@@ -854,6 +882,8 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
+   elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_FALSE);
+   elm_scroller_gravity_set(scroller, 0.0, 1.0);
    evas_object_show(scroller);
    elm_object_content_set(scroller, table);
 
@@ -880,6 +910,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    elm_entry_single_line_set(entry, 0);
    elm_entry_scrollable_set(entry, 0);
    elm_entry_editable_set(entry, 0);
+
    evas_object_show(entry);
    elm_table_pack(table, entry, 0, 1, 1, 1);
 
@@ -1049,7 +1080,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    elm_table_pack(table, entry, 9, 1, 1, 1);
 
    ui->btn_cpu_usage = button = elm_button_add(parent);
-   _btn_icon_state_set(button, EINA_TRUE);
+   _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "CPU %");
@@ -1402,7 +1433,7 @@ ui_add(Evas_Object *parent)
    ui->win = parent;
    ui->first_run = EINA_TRUE;
    ui->poll_delay = 3;
-   ui->sort_reverse = EINA_TRUE;
+   ui->sort_reverse = EINA_FALSE;
    ui->selected_pid = -1;
    ui->program_pid = getpid();
 
