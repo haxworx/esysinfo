@@ -454,7 +454,7 @@ _process_list_freebsd_get(void)
    Eina_List *list;
    struct rusage *usage;
    struct kinfo_proc kp;
-   int mib[6];
+   int mib[4];
    size_t len;
    int pagesize = getpagesize();
 
@@ -504,7 +504,7 @@ proc_info_by_pid(int pid)
 {
    struct rusage *usage;
    struct kinfo_proc kp;
-   int mib[6];
+   int mib[4];
    size_t len;
    int pagesize = getpagesize();
 

@@ -178,7 +178,7 @@ _fields_append(Ui *ui, Proc_Stats *proc)
 
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_PID], eina_slstr_printf("<link>%d</link> <br>", proc->pid), TEXT_FIELD_MAX);
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_UID], eina_slstr_printf("%d <br>", proc->uid), TEXT_FIELD_MAX);
-   eina_strlcat(ui->fields[PROCESS_INFO_TEXT_FIELD_MAX], eina_slstr_printf("%lld K<br>", proc->mem_size), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_SIZE], eina_slstr_printf("%lld K<br>", proc->mem_size), TEXT_FIELD_MAX);
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_RSS], eina_slstr_printf("%lld K<br>", proc->mem_rss), TEXT_FIELD_MAX);
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_COMMAND], eina_slstr_printf("%s<br>", proc->command), TEXT_FIELD_MAX);
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_STATE], eina_slstr_printf("%s <br>", proc->state), TEXT_FIELD_MAX);
@@ -190,7 +190,7 @@ _fields_show(Ui *ui, Proc_Stats *proc)
 {
    elm_object_text_set(ui->entry_pid, ui->fields[PROCESS_INFO_FIELD_PID]);
    elm_object_text_set(ui->entry_uid, ui->fields[PROCESS_INFO_FIELD_UID]);
-   elm_object_text_set(ui->entry_size, ui->fields[PROCESS_INFO_TEXT_FIELD_MAX]);
+   elm_object_text_set(ui->entry_size, ui->fields[PROCESS_INFO_FIELD_SIZE]);
    elm_object_text_set(ui->entry_rss, ui->fields[PROCESS_INFO_FIELD_RSS]);
    elm_object_text_set(ui->entry_cmd, ui->fields[PROCESS_INFO_FIELD_COMMAND]);
    elm_object_text_set(ui->entry_state, ui->fields[PROCESS_INFO_FIELD_STATE]);
@@ -1404,7 +1404,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    button = elm_button_add(parent);
    evas_object_size_hint_weight_set(button, 0.2, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0);
-   elm_object_text_set(button, "Quit");
+   elm_object_text_set(button, "Close");
    elm_box_pack_end(hbox, button);
    evas_object_show(button);
    evas_object_smart_callback_add(button, "clicked", _btn_quit_clicked_cb, ui);
