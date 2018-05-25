@@ -68,7 +68,7 @@ typedef struct Ui
    pid_t        selected_pid;
    pid_t        program_pid;
 
-   Eina_Strbuf *fields[PROCESS_INFO_FIELDS];
+   char *fields[PROCESS_INFO_FIELDS];
 
    Evas_Object *list_pid;
 

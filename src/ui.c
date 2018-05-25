@@ -179,25 +179,25 @@ _fields_append(Ui *ui, Proc_Stats *proc)
    if (ui->program_pid == proc->pid)
      return;
 
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PID], "<link>%d</link> <br>", proc->pid);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_SIZE], "%lld K<br>", proc->mem_size);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_RSS], "%lld K<br>", proc->mem_rss);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_COMMAND], "%s<br>", proc->command);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_STATE], "%s <br>", proc->state);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], "%.0f%% <br>", proc->cpu_usage);
+   strcat(ui->fields[PROCESS_INFO_FIELD_PID], eina_slstr_printf("<link>%d</link> <br>", proc->pid));
+   strcat(ui->fields[PROCESS_INFO_FIELD_UID], eina_slstr_printf("%d <br>", proc->uid));
+   strcat(ui->fields[PROCESS_INFO_FIELD_SIZE], eina_slstr_printf("%lld K<br>", proc->mem_size));
+   strcat(ui->fields[PROCESS_INFO_FIELD_RSS], eina_slstr_printf("%lld K<br>", proc->mem_rss));
+   strcat(ui->fields[PROCESS_INFO_FIELD_COMMAND], eina_slstr_printf("%s<br>", proc->command));
+   strcat(ui->fields[PROCESS_INFO_FIELD_STATE], eina_slstr_printf("%s <br>", proc->state));
+   strcat(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], eina_slstr_printf("%.0f%% <br>", proc->cpu_usage));
 }
 
 static void
 _fields_show(Ui *ui, Proc_Stats *proc)
 {
-   elm_object_text_set(ui->entry_pid, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_PID]));
-   elm_object_text_set(ui->entry_uid, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_UID]));
-   elm_object_text_set(ui->entry_size, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_SIZE]));
-   elm_object_text_set(ui->entry_rss, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_RSS]));
-   elm_object_text_set(ui->entry_cmd, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_COMMAND]));
-   elm_object_text_set(ui->entry_state, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_STATE]));
-   elm_object_text_set(ui->entry_cpu_usage, eina_strbuf_string_get(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE]));
+   elm_object_text_set(ui->entry_pid, ui->fields[PROCESS_INFO_FIELD_PID]);
+   elm_object_text_set(ui->entry_uid, ui->fields[PROCESS_INFO_FIELD_UID]);
+   elm_object_text_set(ui->entry_size, ui->fields[PROCESS_INFO_FIELD_SIZE]);
+   elm_object_text_set(ui->entry_rss, ui->fields[PROCESS_INFO_FIELD_RSS]);
+   elm_object_text_set(ui->entry_cmd, ui->fields[PROCESS_INFO_FIELD_COMMAND]);
+   elm_object_text_set(ui->entry_state, ui->fields[PROCESS_INFO_FIELD_STATE]);
+   elm_object_text_set(ui->entry_cpu_usage, ui->fields[PROCESS_INFO_FIELD_CPU_USAGE]);
 }
 
 static void
@@ -205,7 +205,7 @@ _fields_clear(Ui *ui)
 {
    for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
      {
-        eina_strbuf_reset(ui->fields[i]);
+        ui->fields[i][0] = '\0';
      }
 }
 
@@ -214,7 +214,7 @@ _fields_free(Ui *ui)
 {
    for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
      {
-        eina_strbuf_free(ui->fields[i]);
+        free(ui->fields[i]);
      }
 }
 
@@ -883,7 +883,6 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
    elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_FALSE);
-   elm_scroller_gravity_set(scroller, 0.0, 1.0);
    evas_object_show(scroller);
    elm_object_content_set(scroller, table);
 
@@ -1441,7 +1440,8 @@ ui_add(Evas_Object *parent)
 
    for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
      {
-        ui->fields[i] = eina_strbuf_new();
+        ui->fields[i] = malloc(32768 * sizeof(char));
+        ui->fields[i][0] = '\0';
      }
 
    eina_lock_new(&_lock);
