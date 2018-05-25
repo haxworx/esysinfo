@@ -5,6 +5,10 @@
 #include <sys/types.h>
 #include <pwd.h>
 
+#if defined(__APPLE__) && defined(__MACH__)
+# define __MacOS__
+#endif
+
 static Eina_Lock _lock;
 
 static long _memory_total = 0;
@@ -1143,7 +1147,11 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    label = elm_label_add(parent);
    evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+#if defined(__MacOS__)
+   elm_object_text_set(label, "WQ #:");
+#else
    elm_object_text_set(label, "CPU #:");
+#endif
    evas_object_show(label);
    elm_table_pack(table, label, 0, 4, 1, 1);
 
