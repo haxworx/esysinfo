@@ -177,8 +177,8 @@ _fields_append(Ui *ui, Proc_Stats *proc)
 
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PID], "%d <br>", proc->pid);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_SIZE], "%ld K<br>", proc->mem_size);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_RSS], "%ld K<br>", proc->mem_rss);
+   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_SIZE], "%lld K<br>", proc->mem_size);
+   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_RSS], "%lld K<br>", proc->mem_rss);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_COMMAND], "%s <br>", proc->command);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_STATE], "%s <br>", proc->state);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], "%.0f%% <br>", proc->cpu_usage);
@@ -650,9 +650,9 @@ _pid_list_poll(void *data)
    elm_object_text_set(ui->entry_pid_cpu, buf);
    snprintf(buf, sizeof(buf), "%d", proc->numthreads);
    elm_object_text_set(ui->entry_pid_threads, buf);
-   snprintf(buf, sizeof(buf), "%ld bytes", proc->mem_size);
+   snprintf(buf, sizeof(buf), "%lld bytes", proc->mem_size);
    elm_object_text_set(ui->entry_pid_size, buf);
-   snprintf(buf, sizeof(buf), "%ld bytes", proc->mem_rss);
+   snprintf(buf, sizeof(buf), "%lld bytes", proc->mem_rss);
    elm_object_text_set(ui->entry_pid_rss, buf);
    snprintf(buf, sizeof(buf), "%d", proc->nice);
    elm_object_text_set(ui->entry_pid_nice, buf);
@@ -1337,7 +1337,7 @@ ui_add(Evas_Object *parent)
    ui = calloc(1, sizeof(Ui));
    ui->win = parent;
    ui->first_run = EINA_TRUE;
-   ui->poll_delay = 2;
+   ui->poll_delay = 3;
    ui->sort_reverse = EINA_TRUE;
    ui->selected_pid = -1;
    ui->program_pid = getpid();
