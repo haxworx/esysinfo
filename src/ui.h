@@ -22,6 +22,7 @@ typedef enum
 typedef struct Ui
 {
    Evas_Object *win;
+   Evas_Object *panel;
 
    Evas_Object *progress_cpu;
    Evas_Object *progress_mem;

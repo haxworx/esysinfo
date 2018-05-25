@@ -179,11 +179,11 @@ _fields_append(Ui *ui, Proc_Stats *proc)
    if (ui->program_pid == proc->pid)
      return;
 
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PID], "%d <br>", proc->pid);
+   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_PID], "<link>%d</link> <br>", proc->pid);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_UID], "%d <br>", proc->uid);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_SIZE], "%lld K<br>", proc->mem_size);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_RSS], "%lld K<br>", proc->mem_rss);
-   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_COMMAND], "%s <br>", proc->command);
+   eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_COMMAND], "%s<br>", proc->command);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_STATE], "%s <br>", proc->state);
    eina_strbuf_append_printf(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], "%.0f%% <br>", proc->cpu_usage);
 }
@@ -741,6 +741,61 @@ _btn_kill_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
 }
 
 static void
+_entry_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   Ui *ui;
+   Evas_Object *textblock;
+   Evas_Textblock_Cursor *pos;
+   const char *text;
+   char *pid_text, *start, *end;
+
+   ui = data;
+
+   textblock = elm_entry_textblock_get(obj);
+   if (!textblock)
+     return;
+
+   pos = evas_object_textblock_cursor_get(textblock);
+   if (!pos)
+     return;
+
+   text = evas_textblock_cursor_paragraph_text_get(pos);
+   if (!text)
+     return;
+
+   pid_text = strdup(text);
+
+   start = strchr(pid_text, '>') + 1;
+   if (start)
+     {
+        end = strchr(start, '<');
+        if (end)
+          *end = '\0';
+     }
+   else
+     {
+        free(pid_text);
+        return;
+     }
+
+   ui->selected_pid = atol(start);
+
+   free(pid_text);
+
+   _pid_list_poll(ui);
+
+   if (ui->timer_pid)
+     {
+        ecore_timer_del(ui->timer_pid);
+        ui->timer_pid = NULL;
+     }
+
+   ui->timer_pid = ecore_timer_add(ui->poll_delay, _pid_list_poll, ui);
+
+   elm_panel_toggle(ui->panel);
+}
+
+static void
 _user_interface_setup(Evas_Object *parent, Ui *ui)
 {
    Evas_Object *box, *hbox, *frame, *table;
@@ -1023,10 +1078,11 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_smart_callback_add(ui->btn_cmd, "clicked", _btn_cmd_clicked_cb, ui);
    evas_object_smart_callback_add(ui->btn_state, "clicked", _btn_state_clicked_cb, ui);
    evas_object_smart_callback_add(ui->btn_cpu_usage, "clicked", _btn_cpu_usage_clicked_cb, ui);
+   evas_object_smart_callback_add(ui->entry_pid, "clicked", _entry_pid_clicked_cb, ui);
 
    /* End of system information and process list overview */
 
-   panel = elm_panel_add(parent);
+   ui->panel = panel = elm_panel_add(parent);
    evas_object_size_hint_weight_set(panel, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(panel, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_panel_orient_set(panel, ELM_PANEL_ORIENT_LEFT);
