@@ -392,16 +392,10 @@ _process_list_macos_get(void)
         int size = proc_pidinfo(i, PROC_PIDTASKALLINFO, 0, &taskinfo, sizeof(taskinfo));
         if (size != sizeof(taskinfo)) continue;
 
-        struct proc_workqueueinfo workqueue;
-
-        size = proc_pidinfo(i, PROC_PIDWORKQUEUEINFO, 0, &workqueue, sizeof(workqueue));
         Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
-
         p->pid = i;
         p->uid = taskinfo.pbsd.pbi_uid;
-        /* Actually WQ# */
-        p->cpu_id = workqueue.pwq_nthreads;
-
+        p->cpu_id = -1;
         snprintf(p->command, sizeof(p->command), "%s", taskinfo.pbsd.pbi_comm);
         p->cpu_time = taskinfo.ptinfo.pti_total_user + taskinfo.ptinfo.pti_total_system;
         p->cpu_time /= 10000000;
