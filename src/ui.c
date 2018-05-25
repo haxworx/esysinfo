@@ -645,7 +645,6 @@ _pid_list_poll(void *data)
    Proc_Stats *proc;
    double cpu_usage;
    int64_t time_prev;
-   char buf[1024];
 
    ui = data;
 
@@ -669,29 +668,20 @@ _pid_list_poll(void *data)
      }
 
    elm_object_text_set(ui->entry_pid_cmd, proc->command);
-   snprintf(buf, sizeof(buf), "%d", proc->pid);
 
    pwd_entry = getpwuid(proc->uid);
    if (pwd_entry)
      elm_object_text_set(ui->entry_pid_user, pwd_entry->pw_name);
 
-   elm_object_text_set(ui->entry_pid_pid, buf);
-   snprintf(buf, sizeof(buf), "%d", proc->uid);
-   elm_object_text_set(ui->entry_pid_uid, buf);
-   snprintf(buf, sizeof(buf), "%d", proc->cpu_id);
-   elm_object_text_set(ui->entry_pid_cpu, buf);
-   snprintf(buf, sizeof(buf), "%d", proc->numthreads);
-   elm_object_text_set(ui->entry_pid_threads, buf);
-   snprintf(buf, sizeof(buf), "%lld bytes", proc->mem_size);
-   elm_object_text_set(ui->entry_pid_size, buf);
-   snprintf(buf, sizeof(buf), "%lld bytes", proc->mem_rss);
-   elm_object_text_set(ui->entry_pid_rss, buf);
-   snprintf(buf, sizeof(buf), "%d", proc->nice);
-   elm_object_text_set(ui->entry_pid_nice, buf);
-   snprintf(buf, sizeof(buf), "%d", proc->priority);
-   elm_object_text_set(ui->entry_pid_pri, buf);
-   snprintf(buf, sizeof(buf), "%s", proc->state);
-   elm_object_text_set(ui->entry_pid_state, buf);
+   elm_object_text_set(ui->entry_pid_pid, eina_slstr_printf("%d", proc->pid));
+   elm_object_text_set(ui->entry_pid_uid, eina_slstr_printf("%d", proc->uid));
+   elm_object_text_set(ui->entry_pid_cpu, eina_slstr_printf("%d", proc->cpu_id));
+   elm_object_text_set(ui->entry_pid_threads, eina_slstr_printf("%d", proc->numthreads));
+   elm_object_text_set(ui->entry_pid_size, eina_slstr_printf("%lld bytes", proc->mem_size));
+   elm_object_text_set(ui->entry_pid_rss, eina_slstr_printf("%lld bytes", proc->mem_rss));
+   elm_object_text_set(ui->entry_pid_nice, eina_slstr_printf("%d", proc->nice));
+   elm_object_text_set(ui->entry_pid_pri, eina_slstr_printf("%d", proc->priority));
+   elm_object_text_set(ui->entry_pid_state, proc->state);
 
    time_prev = ui->cpu_times[proc->pid];
 
@@ -701,8 +691,7 @@ _pid_list_poll(void *data)
         cpu_usage = (proc->cpu_time - time_prev) / ui->poll_delay;
      }
 
-   snprintf(buf, sizeof(buf), "%.0f%%", cpu_usage);
-   elm_object_text_set(ui->entry_pid_cpu_usage, buf);
+   elm_object_text_set(ui->entry_pid_cpu_usage, eina_slstr_printf("%.0f%%", cpu_usage));
 
    free(proc);
 
@@ -883,6 +872,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
    elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_FALSE);
+   elm_scroller_gravity_set(scroller, 0.0, 1.0);
    evas_object_show(scroller);
    elm_object_content_set(scroller, table);
 
