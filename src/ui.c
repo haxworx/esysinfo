@@ -1420,6 +1420,7 @@ ui_add(Evas_Object *parent)
    ui->first_run = EINA_TRUE;
    ui->poll_delay = 3;
    ui->sort_reverse = EINA_FALSE;
+   ui->sort_type = SORT_BY_PID;
    ui->selected_pid = -1;
    ui->program_pid = getpid();
 
