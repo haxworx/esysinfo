@@ -14,15 +14,16 @@ static void
 _system_stats(void *data, Ecore_Thread *thread)
 {
    Sys_Stats *sys;
+   Ui *ui = data;
 
    while (1)
      {
         if (ecore_thread_check(thread))
           return;
-
         sys = malloc(sizeof(Sys_Stats));
         sys->cpu_count = system_cpu_memory_get(&sys->cpu_usage, &sys->mem_total, &sys->mem_used);
         ecore_thread_feedback(thread, sys);
+        sleep(ui->poll_delay);
      }
 }
 
@@ -336,7 +337,6 @@ _process_stats_list(void *data, Ecore_Thread *thread)
 static void
 _thread_end_cb(void *data EINA_UNUSED, Ecore_Thread *thread)
 {
-   while ((ecore_thread_wait(thread, 0.1)) != EINA_TRUE);
    thread = NULL;
 }
 
