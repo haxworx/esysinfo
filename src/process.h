@@ -44,27 +44,6 @@ typedef struct _Proc_Stats
    long        cpu_time;
 } Proc_Stats;
 
-typedef enum
-{
-   PROCESS_INFO_FIELD_PID,
-   PROCESS_INFO_FIELD_UID,
-   PROCESS_INFO_FIELD_SIZE,
-   PROCESS_INFO_FIELD_RSS,
-   PROCESS_INFO_FIELD_COMMAND,
-   PROCESS_INFO_FIELD_STATE,
-   PROCESS_INFO_FIELD_CPU_USAGE,
-
-   // Not displayed in the main UI.
-   PROCESS_INFO_FIELD_NICE,
-   PROCESS_INFO_FIELD_PRI,
-   PROCESS_INFO_FIELD_CPU,
-   PROCESS_INFO_FIELD_THREADS,
-   // Not used yet in UI.
-   PROCESS_INFO_FIELD_CPU_TIME,
-} Proc_Stats_Field;
-
-#define PROCESS_INFO_FIELDS 7
-
 /**
  * Query a full list of running processes and return a list.
  *

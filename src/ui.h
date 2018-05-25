@@ -5,6 +5,27 @@
 
 typedef enum
 {
+   PROCESS_INFO_FIELD_PID,
+   PROCESS_INFO_FIELD_UID,
+   PROCESS_INFO_FIELD_SIZE,
+   PROCESS_INFO_FIELD_RSS,
+   PROCESS_INFO_FIELD_COMMAND,
+   PROCESS_INFO_FIELD_STATE,
+   PROCESS_INFO_FIELD_CPU_USAGE,
+
+   // Not displayed in the main UI.
+   PROCESS_INFO_FIELD_NICE,
+   PROCESS_INFO_FIELD_PRI,
+   PROCESS_INFO_FIELD_CPU,
+   PROCESS_INFO_FIELD_THREADS,
+   // Not used yet in UI.
+   PROCESS_INFO_FIELD_CPU_TIME,
+} Proc_Stats_Field;
+
+#define PROCESS_INFO_FIELDS 7
+
+typedef enum
+{
    SORT_BY_NONE,
    SORT_BY_PID,
    SORT_BY_UID,
@@ -68,6 +89,7 @@ typedef struct Ui
    pid_t        selected_pid;
    pid_t        program_pid;
 
+#define TEXT_FIELD_MAX 65535
    char *fields[PROCESS_INFO_FIELDS];
 
    Evas_Object *list_pid;

@@ -176,13 +176,13 @@ _fields_append(Ui *ui, Proc_Stats *proc)
    if (ui->program_pid == proc->pid)
      return;
 
-   strcat(ui->fields[PROCESS_INFO_FIELD_PID], eina_slstr_printf("<link>%d</link> <br>", proc->pid));
-   strcat(ui->fields[PROCESS_INFO_FIELD_UID], eina_slstr_printf("%d <br>", proc->uid));
-   strcat(ui->fields[PROCESS_INFO_FIELD_SIZE], eina_slstr_printf("%lld K<br>", proc->mem_size));
-   strcat(ui->fields[PROCESS_INFO_FIELD_RSS], eina_slstr_printf("%lld K<br>", proc->mem_rss));
-   strcat(ui->fields[PROCESS_INFO_FIELD_COMMAND], eina_slstr_printf("%s<br>", proc->command));
-   strcat(ui->fields[PROCESS_INFO_FIELD_STATE], eina_slstr_printf("%s <br>", proc->state));
-   strcat(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], eina_slstr_printf("%.0f%% <br>", proc->cpu_usage));
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_PID], eina_slstr_printf("<link>%d</link> <br>", proc->pid), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_UID], eina_slstr_printf("%d <br>", proc->uid), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_TEXT_FIELD_MAX], eina_slstr_printf("%lld K<br>", proc->mem_size), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_RSS], eina_slstr_printf("%lld K<br>", proc->mem_rss), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_COMMAND], eina_slstr_printf("%s<br>", proc->command), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_STATE], eina_slstr_printf("%s <br>", proc->state), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], eina_slstr_printf("%.0f%% <br>", proc->cpu_usage), TEXT_FIELD_MAX);
 }
 
 static void
@@ -190,7 +190,7 @@ _fields_show(Ui *ui, Proc_Stats *proc)
 {
    elm_object_text_set(ui->entry_pid, ui->fields[PROCESS_INFO_FIELD_PID]);
    elm_object_text_set(ui->entry_uid, ui->fields[PROCESS_INFO_FIELD_UID]);
-   elm_object_text_set(ui->entry_size, ui->fields[PROCESS_INFO_FIELD_SIZE]);
+   elm_object_text_set(ui->entry_size, ui->fields[PROCESS_INFO_TEXT_FIELD_MAX]);
    elm_object_text_set(ui->entry_rss, ui->fields[PROCESS_INFO_FIELD_RSS]);
    elm_object_text_set(ui->entry_cmd, ui->fields[PROCESS_INFO_FIELD_COMMAND]);
    elm_object_text_set(ui->entry_state, ui->fields[PROCESS_INFO_FIELD_STATE]);
@@ -1427,7 +1427,7 @@ ui_add(Evas_Object *parent)
 
    for (int i = 0; i < PROCESS_INFO_FIELDS; i++)
      {
-        ui->fields[i] = malloc(32768 * sizeof(char));
+        ui->fields[i] = malloc(TEXT_FIELD_MAX * sizeof(char));
         ui->fields[i][0] = '\0';
      }
 
