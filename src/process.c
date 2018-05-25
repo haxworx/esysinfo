@@ -337,7 +337,7 @@ _process_list_openbsd_get(void)
    char errbuf[4096];
    kvm_t *kern;
    int pid_count, pagesize;
-   Eina_List *l, *list = list_new();
+   Eina_List *l, *list = NULL;
 
    kern = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
    if (!kern) return NULL;
