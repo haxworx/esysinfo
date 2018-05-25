@@ -1102,7 +1102,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    ui->panel = panel = elm_panel_add(parent);
    evas_object_size_hint_weight_set(panel, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(panel, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_panel_orient_set(panel, ELM_PANEL_ORIENT_LEFT);
+   elm_panel_orient_set(panel, ELM_PANEL_ORIENT_BOTTOM);
    elm_panel_toggle(panel);
    elm_object_content_set(parent, panel);
    evas_object_show(panel);
