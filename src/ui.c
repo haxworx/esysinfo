@@ -722,7 +722,7 @@ _pid_list_poll(void *data)
    elm_object_text_set(ui->entry_pid_pri, eina_slstr_printf("%d", proc->priority));
    elm_object_text_set(ui->entry_pid_state, proc->state);
 
-   if (!ui->first_run && proc->cpu_time > ui->pid_cpu_time)
+   if (proc->cpu_time > ui->pid_cpu_time)
      {
         cpu_usage = (double) (proc->cpu_time - ui->pid_cpu_time) / ui->poll_delay;
      }
