@@ -293,7 +293,7 @@ _conversions_apply(Ui *ui, Proc_Stats *proc)
 }
 
 static void
-_process_stats_list_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg EINA_UNUSED)
+_system_process_list_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, void *msg EINA_UNUSED)
 {
    Ui *ui;
    Eina_List *list, *l;
@@ -337,13 +337,13 @@ _process_stats_list_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, vo
 }
 
 static void
-_process_stats_list_update(Ui *ui)
+_system_process_list_update(Ui *ui)
 {
-   _process_stats_list_feedback_cb(ui, NULL, NULL);
+   _system_process_list_feedback_cb(ui, NULL, NULL);
 }
 
 static void
-_process_stats_list(void *data, Ecore_Thread *thread)
+_system_process_list(void *data, Ecore_Thread *thread)
 {
    Ui *ui;
    int i;
@@ -416,7 +416,7 @@ _btn_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
 
    ui->sort_type = SORT_BY_PID;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -433,7 +433,7 @@ _btn_uid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
 
    ui->sort_type = SORT_BY_UID;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -450,7 +450,7 @@ _btn_nice_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
 
    ui->sort_type = SORT_BY_NICE;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -467,7 +467,7 @@ _btn_pri_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
 
    ui->sort_type = SORT_BY_PRI;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -484,7 +484,7 @@ _btn_cpu_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
 
    ui->sort_type = SORT_BY_CPU;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -501,7 +501,7 @@ _btn_cpu_usage_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_
 
    ui->sort_type = SORT_BY_CPU_USAGE;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -518,7 +518,7 @@ _btn_threads_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_in
 
    ui->sort_type = SORT_BY_THREADS;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -535,7 +535,7 @@ _btn_size_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
 
    ui->sort_type = SORT_BY_SIZE;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -552,7 +552,7 @@ _btn_rss_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
 
    ui->sort_type = SORT_BY_RSS;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -569,7 +569,7 @@ _btn_cmd_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
 
    ui->sort_type = SORT_BY_CMD;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -586,7 +586,7 @@ _btn_state_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
 
    ui->sort_type = SORT_BY_STATE;
 
-   _process_stats_list_update(ui);
+   _system_process_list_update(ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -614,7 +614,7 @@ _btn_about_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
 }
 
 static void
-_pid_list(void *data, Ecore_Thread *thread)
+_process_view(void *data, Ecore_Thread *thread)
 {
    Ui *ui;
    int i;
@@ -644,7 +644,7 @@ _list_item_del_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EIN
 }
 
 static void
-_pid_list_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
+_process_view_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 {
    Proc_Stats *proc;
    Elm_Widget_Item *item;
@@ -675,7 +675,7 @@ _pid_list_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 }
 
 static Eina_Bool
-_pid_list_poll(void *data)
+_process_view_update(void *data)
 {
    Ui *ui;
    const Eina_List *l, *list;
@@ -690,7 +690,7 @@ _pid_list_poll(void *data)
    proc = proc_info_by_pid(ui->selected_pid);
    if (!proc)
      {
-        _pid_list_feedback_cb(NULL, NULL, ui);
+        _process_view_feedback_cb(NULL, NULL, ui);
 
         return ECORE_CALLBACK_CANCEL;
      }
@@ -736,7 +736,7 @@ _pid_list_poll(void *data)
 }
 
 static void
-_pid_list_clicked_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
+_process_view_list_selected_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 {
    Elm_Object_Item *it;
    Ui *ui;
@@ -756,9 +756,9 @@ _pid_list_clicked_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 
    ui->selected_pid = atoi(text);
 
-   _pid_list_poll(ui);
+   _process_view_update(ui);
 
-   ui->timer_pid = ecore_timer_add(ui->poll_delay, _pid_list_poll, ui);
+   ui->timer_pid = ecore_timer_add(ui->poll_delay, _process_view_update, ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
@@ -838,7 +838,7 @@ _entry_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
 
    free(pid_text);
 
-   _pid_list_poll(ui);
+   _process_view_update(ui);
 
    if (ui->timer_pid)
      {
@@ -846,7 +846,7 @@ _entry_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
         ui->timer_pid = NULL;
      }
 
-   ui->timer_pid = ecore_timer_add(ui->poll_delay, _pid_list_poll, ui);
+   ui->timer_pid = ecore_timer_add(ui->poll_delay, _process_view_update, ui);
 
    elm_panel_toggle(ui->panel);
 }
@@ -1221,7 +1221,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_align_set(list, EVAS_HINT_FILL, EVAS_HINT_FILL);
    evas_object_show(list);
    elm_object_content_set(frame, list);
-   evas_object_smart_callback_add(ui->list_pid, "selected", _pid_list_clicked_cb, ui);
+   evas_object_smart_callback_add(ui->list_pid, "selected", _process_view_list_selected_cb, ui);
 
    frame = elm_frame_add(box);
    evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -1531,7 +1531,7 @@ ui_add(Evas_Object *parent)
    _user_interface_setup(parent, ui);
 
    ecore_thread_feedback_run(_system_stats, _system_stats_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
-   ecore_thread_feedback_run(_process_stats_list, _process_stats_list_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
-   ecore_thread_feedback_run(_pid_list, _pid_list_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
+   ecore_thread_feedback_run(_system_process_list, _system_process_list_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
+   ecore_thread_feedback_run(_process_view, _process_view_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
 }
 
