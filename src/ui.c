@@ -30,12 +30,12 @@ _system_stats(void *data, Ecore_Thread *thread)
 
         ecore_thread_feedback(thread, sys);
 
-        for (i = 0; i < ui->poll_delay; i++)
+        for (i = 0; i < ui->poll_delay * 2; i++)
            {
               if (ecore_thread_check(thread))
                 return;
 
-              sleep(1);
+              usleep(500000);
            }
      }
 }
@@ -49,12 +49,16 @@ _system_stats_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    ui = data;
    sys = msg;
 
+    if (ecore_thread_check(thread))
+      goto out;
+
    _memory_total = sys->mem_total >>= 10;
    _memory_used = sys->mem_used >>= 10;
 
    elm_progressbar_value_set(ui->progress_cpu, (double)sys->cpu_usage / 100);
    elm_progressbar_value_set(ui->progress_mem, (double)((sys->mem_total / 100.0) * sys->mem_used) / 1000000);
 
+out:
    free(sys);
 }
 
@@ -182,7 +186,7 @@ _fields_append(Ui *ui, Proc_Stats *proc)
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_RSS], eina_slstr_printf("%lld K<br>", proc->mem_rss), TEXT_FIELD_MAX);
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_COMMAND], eina_slstr_printf("%s<br>", proc->command), TEXT_FIELD_MAX);
    eina_strlcat(ui->fields[PROCESS_INFO_FIELD_STATE], eina_slstr_printf("%s <br>", proc->state), TEXT_FIELD_MAX);
-   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], eina_slstr_printf("%.0f%% <br>", proc->cpu_usage), TEXT_FIELD_MAX);
+   eina_strlcat(ui->fields[PROCESS_INFO_FIELD_CPU_USAGE], eina_slstr_printf("%.1f%% <br>", proc->cpu_usage), TEXT_FIELD_MAX);
 }
 
 static void
@@ -299,7 +303,7 @@ _process_stats_list_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, vo
         proc->cpu_usage = 0;
         if (!ui->first_run && proc->cpu_time > time_prev)
           {
-             proc->cpu_usage = (proc->cpu_time - time_prev) / ui->poll_delay;
+             proc->cpu_usage = (double) (proc->cpu_time - time_prev) / ui->poll_delay;
           }
      }
 
@@ -332,14 +336,20 @@ _process_stats_list_update(Ui *ui)
 static void
 _process_stats_list(void *data, Ecore_Thread *thread)
 {
-   Ui *ui = data;
+   Ui *ui;
+   int i;
+
+   ui = data;
 
    while (1)
      {
         ecore_thread_feedback(thread, ui);
-        sleep(ui->poll_delay);
-        if (ecore_thread_check(thread))
-          break;
+        for (i = 0; i < ui->poll_delay * 2; i++)
+          {
+             usleep(500000);
+             if (ecore_thread_check(thread))
+               return;
+          }
      }
 }
 
@@ -606,12 +616,12 @@ _pid_list(void *data, Ecore_Thread *thread)
      {
         ecore_thread_feedback(thread, ui);
 
-        for (i = 0; i < 30; i++)
+        for (i = 0; i < 30 * 2; i++)
           {
              if (ecore_thread_check(thread))
                return;
 
-             sleep(1);
+             usleep(500000);
           }
      }
 }
@@ -707,10 +717,10 @@ _pid_list_poll(void *data)
 
    if (!ui->first_run && proc->cpu_time > time_prev)
      {
-        cpu_usage = (proc->cpu_time - time_prev) / ui->poll_delay;
+        cpu_usage = (double) (proc->cpu_time - time_prev) / ui->poll_delay;
      }
 
-   elm_object_text_set(ui->entry_pid_cpu_usage, eina_slstr_printf("%.0f%%", cpu_usage));
+   elm_object_text_set(ui->entry_pid_cpu_usage, eina_slstr_printf("%.1f%%", cpu_usage));
 
    free(proc);
 
@@ -741,6 +751,7 @@ _pid_list_clicked_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
    _pid_list_poll(ui);
 
    ui->timer_pid = ecore_timer_add(ui->poll_delay, _pid_list_poll, ui);
+
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
