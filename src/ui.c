@@ -382,6 +382,7 @@ _btn_icon_state_set(Evas_Object *button, Eina_Bool reverse)
      elm_icon_standard_set(icon, "go-up");
 
    elm_object_part_content_set(button, "icon", icon);
+   evas_object_show(icon);
 }
 
 static void
@@ -397,6 +398,8 @@ _btn_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    ui->sort_type = SORT_BY_PID;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -412,6 +415,8 @@ _btn_uid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    ui->sort_type = SORT_BY_UID;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -427,6 +432,8 @@ _btn_nice_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
    ui->sort_type = SORT_BY_NICE;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -442,6 +449,8 @@ _btn_pri_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    ui->sort_type = SORT_BY_PRI;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -457,6 +466,8 @@ _btn_cpu_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    ui->sort_type = SORT_BY_CPU;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -472,6 +483,8 @@ _btn_cpu_usage_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_
    ui->sort_type = SORT_BY_CPU_USAGE;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -487,6 +500,8 @@ _btn_threads_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_in
    ui->sort_type = SORT_BY_THREADS;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -502,6 +517,8 @@ _btn_size_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info 
    ui->sort_type = SORT_BY_SIZE;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -517,6 +534,8 @@ _btn_rss_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    ui->sort_type = SORT_BY_RSS;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -532,6 +551,8 @@ _btn_cmd_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info E
    ui->sort_type = SORT_BY_CMD;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -547,6 +568,8 @@ _btn_state_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
    ui->sort_type = SORT_BY_STATE;
 
    _process_stats_list_update(ui);
+
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -813,7 +836,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
 {
    Evas_Object *box, *hbox, *frame, *table;
    Evas_Object *progress, *button, *entry, *icon;
-   Evas_Object *panel, *list, *label;
+   Evas_Object *panel, *scroller, *list, *label;
 
    box = elm_box_add(parent);
    evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -859,27 +882,11 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_show(progress);
 
    table = elm_table_add(parent);
-   evas_object_size_hint_weight_set(table, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   evas_object_size_hint_weight_set(table, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(table, EVAS_HINT_FILL, 0);
    elm_table_padding_set(table, 0, 0);
    evas_object_show(table);
-
-   Evas_Object *scroller = elm_scroller_add(parent);
-   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
-   elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_FALSE);
-   elm_scroller_gravity_set(scroller, 0.0, 1.0);
-   evas_object_show(scroller);
-   elm_object_content_set(scroller, table);
-
-   frame = elm_frame_add(box);
-   evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, 0.5);//EVAS_HINT_EXPAND);
-   evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_object_text_set(frame, "System Overview");
-   elm_box_pack_end(box, frame);
-   evas_object_show(frame);
-   elm_object_content_set(frame, scroller);
+   elm_box_pack_end(box, table);
 
    ui->btn_pid = button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
@@ -889,17 +896,6 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_show(button);
    elm_table_pack(table, button, 0, 0, 1, 1);
 
-   ui->entry_pid = entry = elm_entry_add(parent);
-   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
-   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
-   elm_entry_editable_set(entry, 0);
-   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
-   evas_object_show(entry);
-   elm_table_pack(table, entry, 0, 1, 1, 1);
-
    ui->btn_uid = button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
@@ -908,16 +904,102 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_show(button);
    elm_table_pack(table, button, 1, 0, 1, 1);
 
+   ui->btn_size = button = elm_button_add(parent);
+   _btn_icon_state_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "Size");
+   evas_object_show(button);
+   elm_table_pack(table, button, 6, 0, 1, 1);
+
+   ui->btn_rss = button = elm_button_add(parent);
+   _btn_icon_state_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "Res");
+   evas_object_show(button);
+   elm_table_pack(table, button, 7, 0, 1, 1);
+
+   ui->btn_cmd = button = elm_button_add(parent);
+   _btn_icon_state_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "Command");
+   evas_object_show(button);
+   elm_table_pack(table, button, 8, 0, 1, 1);
+
+   ui->btn_state = button = elm_button_add(parent);
+   _btn_icon_state_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "State");
+   evas_object_show(button);
+   elm_table_pack(table, button, 9, 0, 1, 1);
+
+   ui->btn_cpu_usage = button = elm_button_add(parent);
+   _btn_icon_state_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "CPU %");
+   evas_object_show(button);
+   elm_table_pack(table, button, 10, 0, 1, 1);
+
+   table = elm_table_add(parent);
+   evas_object_size_hint_weight_set(table, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_EXPAND);
+   elm_table_padding_set(table, 0, 0);
+   evas_object_show(table);
+
+   ui->scroller = scroller = elm_scroller_add(parent);
+   evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_ON);
+   elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_FALSE);
+   elm_scroller_gravity_set(scroller, 0.0, 0.0);
+   elm_scroller_wheel_disabled_set(scroller, 1);
+   elm_scroller_page_relative_set(scroller, 0, 0);
+   evas_object_show(scroller);
+   elm_object_content_set(scroller, table);
+
+   frame = elm_frame_add(box);
+   evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_object_text_set(frame, "System Overview");
+   elm_object_style_set(frame, "pad_small");
+   elm_box_pack_end(box, frame);
+   evas_object_show(frame);
+   elm_object_content_set(frame, scroller);
+
+   button = elm_button_add(parent);
+   _btn_icon_state_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "PID");
+   elm_table_pack(table, button, 0, 0, 1, 1);
+
+   ui->entry_pid = entry = elm_entry_add(parent);
+   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
+   evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_entry_scrollable_set(entry, 0);
+   elm_entry_editable_set(entry, 0);
+   evas_object_show(entry);
+   elm_table_pack(table, entry, 0, 0, 1, 1);
+
+   button = elm_button_add(parent);
+   _btn_icon_state_set(button, EINA_FALSE);
+   evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
+   evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
+   elm_object_text_set(button, "UID");
+   elm_table_pack(table, button, 1, 0, 1, 1);
+
    ui->entry_uid = entry = elm_entry_add(parent);
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
-   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
-   elm_table_pack(table, entry, 1, 1, 1, 1);
+   elm_table_pack(table, entry, 1, 0, 1, 1);
 
 /*
    ui->btn_nice = button = elm_button_add(parent);
@@ -994,68 +1076,58 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_show(entry);
    elm_table_pack(table, entry, 5, 1, 1, 1);
 */
-   ui->btn_size = button = elm_button_add(parent);
+   button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Size");
-   evas_object_show(button);
    elm_table_pack(table, button, 6, 0, 1, 1);
 
    ui->entry_size = entry = elm_entry_add(parent);
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
+   elm_entry_scrollable_set(entry, 0);
    elm_entry_editable_set(entry, 0);
-   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
-   elm_table_pack(table, entry, 6, 1, 1, 1);
+   elm_table_pack(table, entry, 6, 0, 1, 1);
 
-   ui->btn_rss = button = elm_button_add(parent);
+   button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Res");
-   evas_object_show(button);
    elm_table_pack(table, button, 7, 0, 1, 1);
 
    ui->entry_rss = entry = elm_entry_add(parent);
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
+   elm_entry_scrollable_set(entry, 0);
    elm_entry_editable_set(entry, 0);
-   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
-   elm_table_pack(table, entry, 7, 1, 1, 1);
+   elm_table_pack(table, entry, 7, 0, 1, 1);
 
-   ui->btn_cmd = button = elm_button_add(parent);
+   button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "Command");
-   evas_object_show(button);
    elm_table_pack(table, button, 8, 0, 1, 1);
 
    ui->entry_cmd = entry = elm_entry_add(parent);
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
+   elm_entry_scrollable_set(entry, 0);
    elm_entry_editable_set(entry, 0);
-   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
-   elm_table_pack(table, entry, 8, 1, 1, 1);
+   elm_table_pack(table, entry, 8, 0, 1, 1);
 
-   ui->btn_state = button = elm_button_add(parent);
+   button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "State");
-   evas_object_show(button);
    elm_table_pack(table, button, 9, 0, 1, 1);
 
    ui->entry_state = entry = elm_entry_add(parent);
@@ -1063,19 +1135,17 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
+   elm_entry_scrollable_set(entry, 0);
    elm_entry_editable_set(entry, 0);
    elm_entry_line_wrap_set(entry, 1);
-   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
-   elm_table_pack(table, entry, 9, 1, 1, 1);
+   elm_table_pack(table, entry, 9, 0, 1, 1);
 
-   ui->btn_cpu_usage = button = elm_button_add(parent);
+   button = elm_button_add(parent);
    _btn_icon_state_set(button, EINA_FALSE);
    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0.5);
    elm_object_text_set(button, "CPU %");
-   evas_object_show(button);
    elm_table_pack(table, button, 10, 0, 1, 1);
 
    ui->entry_cpu_usage = entry = elm_entry_add(parent);
@@ -1083,12 +1153,11 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
+   elm_entry_scrollable_set(entry, 0);
    elm_entry_editable_set(entry, 0);
    elm_entry_line_wrap_set(entry, 1);
-   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
-   elm_table_pack(table, entry, 10, 1, 1, 1);
+   elm_table_pack(table, entry, 10, 0, 1, 1);
 
    evas_object_smart_callback_add(ui->btn_pid, "clicked", _btn_pid_clicked_cb, ui);
    evas_object_smart_callback_add(ui->btn_uid, "clicked", _btn_uid_clicked_cb, ui);
@@ -1144,7 +1213,6 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    table = elm_table_add(parent);
    evas_object_size_hint_weight_set(table, 0.5, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_table_padding_set(table, 3, 3);
    evas_object_show(table);
 
    scroller = elm_scroller_add(parent);
@@ -1166,7 +1234,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 1);
+   elm_entry_scrollable_set(entry, 0);
    elm_entry_editable_set(entry, 0);
    evas_object_show(entry);
    elm_entry_line_wrap_set(entry, 1);
