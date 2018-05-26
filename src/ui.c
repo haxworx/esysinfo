@@ -146,10 +146,19 @@ static int
 _sort_by_cpu_usage(const void *p1, const void *p2)
 {
    const Proc_Stats *inf1, *inf2;
+   double one, two;
 
    inf1 = p1; inf2 = p2;
 
-   return inf1->cpu_usage - inf2->cpu_usage;
+   one = inf1->cpu_usage;
+   two = inf2->cpu_usage;
+
+   if (one < two)
+     return -1;
+   if (two > one)
+     return 1;
+
+   return 0;
 }
 
 static int
@@ -713,13 +722,12 @@ _pid_list_poll(void *data)
    elm_object_text_set(ui->entry_pid_pri, eina_slstr_printf("%d", proc->priority));
    elm_object_text_set(ui->entry_pid_state, proc->state);
 
-   time_prev = ui->cpu_times[proc->pid];
-
-   if (!ui->first_run && proc->cpu_time > time_prev)
+   if (!ui->first_run && proc->cpu_time > ui->pid_cpu_time)
      {
-        cpu_usage = (double) (proc->cpu_time - time_prev) / ui->poll_delay;
+        cpu_usage = (double) (proc->cpu_time - ui->pid_cpu_time) / ui->poll_delay;
      }
 
+   ui->pid_cpu_time = proc->cpu_time;
    elm_object_text_set(ui->entry_pid_cpu_usage, eina_slstr_printf("%.1f%%", cpu_usage));
 
    free(proc);
