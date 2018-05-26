@@ -473,6 +473,9 @@ _process_list_freebsd_get(void)
              continue;
           }
 
+        if (kp.ki_flag & P_SYSTEM)
+          continue;
+
         Proc_Stats *p = calloc(1, sizeof(Proc_Stats));
 
         p->pid = kp.ki_pid;

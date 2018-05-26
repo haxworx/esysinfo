@@ -641,7 +641,7 @@ _pid_list_poll(void *data)
    struct passwd *pwd_entry;
    Proc_Stats *proc;
    int64_t time_prev;
-   float cpu_usage = 0.0;
+   double cpu_usage = 0.0;
 
    ui = data;
 
