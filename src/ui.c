@@ -1200,7 +1200,7 @@ _ui_main_view_add(Evas_Object *parent, Ui *ui)
    elm_box_pack_end(hbox, box);
 
    button = elm_button_add(parent);
-   evas_object_size_hint_weight_set(button, 0.2, 0);
+   evas_object_size_hint_weight_set(button, 0.1, 0);
    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, 0);
    elm_object_text_set(button, "Close");
    elm_box_pack_end(hbox, button);
