@@ -640,8 +640,8 @@ _pid_list_poll(void *data)
    Elm_Widget_Item *it;
    struct passwd *pwd_entry;
    Proc_Stats *proc;
-   double cpu_usage;
    int64_t time_prev;
+   float cpu_usage = 0.0;
 
    ui = data;
 
@@ -682,7 +682,6 @@ _pid_list_poll(void *data)
 
    time_prev = ui->cpu_times[proc->pid];
 
-   cpu_usage = 0;
    if (!ui->first_run && proc->cpu_time > time_prev)
      {
         cpu_usage = (proc->cpu_time - time_prev) / ui->poll_delay;
@@ -862,6 +861,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    table = elm_table_add(parent);
    evas_object_size_hint_weight_set(table, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_FILL);
+   elm_table_padding_set(table, 0, 0);
    evas_object_show(table);
 
    Evas_Object *scroller = elm_scroller_add(parent);
@@ -893,10 +893,10 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 0);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
-
+   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
    elm_table_pack(table, entry, 0, 1, 1, 1);
 
@@ -912,9 +912,10 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 0);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
+   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
    elm_table_pack(table, entry, 1, 1, 1, 1);
 
@@ -1005,9 +1006,10 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 0);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
+   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
    elm_table_pack(table, entry, 6, 1, 1, 1);
 
@@ -1023,9 +1025,10 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 0);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
+   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
    elm_table_pack(table, entry, 7, 1, 1, 1);
 
@@ -1040,9 +1043,10 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    ui->entry_cmd = entry = elm_entry_add(parent);
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-   elm_entry_single_line_set(entry, 0);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_single_line_set(entry, 1);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
+   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
    elm_table_pack(table, entry, 8, 1, 1, 1);
 
@@ -1059,9 +1063,10 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
    elm_entry_line_wrap_set(entry, 1);
+   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
    elm_table_pack(table, entry, 9, 1, 1, 1);
 
@@ -1078,9 +1083,10 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
    elm_entry_line_wrap_set(entry, 1);
+   elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
    evas_object_show(entry);
    elm_table_pack(table, entry, 10, 1, 1, 1);
 
