@@ -1287,7 +1287,7 @@ _ui_process_panel_add(Evas_Object *parent, Ui *ui)
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_single_line_set(entry, 1);
-   elm_entry_scrollable_set(entry, 0);
+   elm_entry_scrollable_set(entry, 1);
    elm_entry_editable_set(entry, 0);
    evas_object_show(entry);
    elm_entry_line_wrap_set(entry, 1);
