@@ -741,6 +741,7 @@ _pid_list_clicked_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
    _pid_list_poll(ui);
 
    ui->timer_pid = ecore_timer_add(ui->poll_delay, _pid_list_poll, ui);
+   elm_scroller_page_bring_in(ui->scroller, 0, 0);
 }
 
 static void
@@ -957,7 +958,7 @@ _user_interface_setup(Evas_Object *parent, Ui *ui)
    elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_FALSE);
    elm_scroller_gravity_set(scroller, 0.0, 0.0);
    elm_scroller_wheel_disabled_set(scroller, 1);
-   elm_scroller_page_relative_set(scroller, 0, 0);
+   elm_scroller_page_relative_set(scroller, 1, 0);
    evas_object_show(scroller);
    elm_object_content_set(scroller, table);
 
