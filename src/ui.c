@@ -971,7 +971,7 @@ _ui_main_view_add(Evas_Object *parent, Ui *ui)
    elm_table_pack(table, button, 2, 0, 1, 1);
 
    ui->entry_size = entry = elm_entry_add(parent);
-   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
+   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=right'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_scrollable_set(entry, 0);
@@ -987,7 +987,7 @@ _ui_main_view_add(Evas_Object *parent, Ui *ui)
    elm_table_pack(table, button, 3, 0, 1, 1);
 
    ui->entry_rss = entry = elm_entry_add(parent);
-   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=center'");
+   elm_entry_text_style_user_push(entry, "DEFAULT='font=default:style=default size=12 align=right'");
    evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_entry_scrollable_set(entry, 0);
