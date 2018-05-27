@@ -657,11 +657,22 @@ _process_panel_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    Proc_Stats *proc;
    Elm_Widget_Item *item;
    Eina_List *list;
+   const Eina_List *list_items, *l;
+   pid_t *pid;
    Ui *ui = msg;
    char buf[64];
 
+
    list = proc_info_all_get();
    list = eina_list_sort(list, eina_list_count(list), _sort_by_pid);
+
+   list_items = elm_list_items_get(ui->list_pid);
+   EINA_LIST_FOREACH(list_items, l, item);
+     {
+        pid = elm_object_item_data_get(item);
+        free(pid);
+        elm_object_item_del(item);
+     }
 
    elm_list_clear(ui->list_pid);
 
@@ -669,7 +680,7 @@ _process_panel_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
      {
         snprintf(buf, sizeof(buf), "%d", proc->pid);
 
-        pid_t *pid = malloc(sizeof(pid_t));
+        pid = malloc(sizeof(pid_t));
         *pid = proc->pid;
 
         item = elm_list_item_append(ui->list_pid, buf, NULL, NULL, NULL, pid);
