@@ -51,10 +51,6 @@ typedef struct Ui
 
    Evas_Object *entry_pid;
    Evas_Object *entry_uid;
-   Evas_Object *entry_nice;
-   Evas_Object *entry_pri;
-   Evas_Object *entry_cpu;
-   Evas_Object *entry_threads;
    Evas_Object *entry_size;
    Evas_Object *entry_rss;
    Evas_Object *entry_cmd;
@@ -63,10 +59,6 @@ typedef struct Ui
 
    Evas_Object *btn_pid;
    Evas_Object *btn_uid;
-   Evas_Object *btn_nice;
-   Evas_Object *btn_pri;
-   Evas_Object *btn_cpu;
-   Evas_Object *btn_threads;
    Evas_Object *btn_size;
    Evas_Object *btn_rss;
    Evas_Object *btn_cmd;
