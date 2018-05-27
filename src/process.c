@@ -138,9 +138,8 @@ static Eina_List *
 _process_list_linux_get(void)
 {
    char *name;
-   Eina_List *files, *l, *list = NULL;
+   Eina_List *files, *list = NULL;
    FILE *f;
-
    char path[PATH_MAX], line[4096], program_name[1024], state;
    int pid, res, utime, stime, cutime, cstime, uid, psr, pri, nice, numthreads;
    unsigned int mem_size, mem_rss;
@@ -148,9 +147,11 @@ _process_list_linux_get(void)
    int pagesize = getpagesize();
 
    files = ecore_file_ls("/proc");
-   EINA_LIST_FOREACH (files, l, name)
+   EINA_LIST_FREE(files, name)
      {
         pid = atoi(name);
+        free(name);
+
         if (!pid) continue;
 
         snprintf(path, sizeof(path), "/proc/%d/stat", pid);
@@ -208,11 +209,6 @@ _process_list_linux_get(void)
 
         list = eina_list_append(list, p);
      }
-
-   EINA_LIST_FREE (files, name) ;
-   {
-      free(name);
-   }
 
    if (files)
      eina_list_free(files);
