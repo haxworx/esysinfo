@@ -49,16 +49,15 @@ _system_stats_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    ui = data;
    sys = msg;
 
-    if (ecore_thread_check(thread))
-      goto out;
+   if (!ecore_thread_check(thread))
+     {
+        _memory_total = sys->mem_total >>= 10;
+        _memory_used = sys->mem_used >>= 10;
 
-   _memory_total = sys->mem_total >>= 10;
-   _memory_used = sys->mem_used >>= 10;
+        elm_progressbar_value_set(ui->progress_cpu, (double)sys->cpu_usage / 100);
+        elm_progressbar_value_set(ui->progress_mem, (double)((sys->mem_total / 100.0) * sys->mem_used) / 1000000);
+     }
 
-   elm_progressbar_value_set(ui->progress_cpu, (double)sys->cpu_usage / 100);
-   elm_progressbar_value_set(ui->progress_mem, (double)((sys->mem_total / 100.0) * sys->mem_used) / 1000000);
-
-out:
    free(sys);
 }
 
@@ -791,6 +790,7 @@ _entry_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
    ui->timer_pid = ecore_timer_add(ui->poll_delay, _process_panel_update, ui);
 
    elm_panel_toggle(ui->panel);
+   elm_scroller_page_relative_set(ui->scroller, 0, 0);
 }
 
 static void
