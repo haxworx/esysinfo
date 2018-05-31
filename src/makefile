@@ -5,7 +5,7 @@ OBJECTS = system.o process.o ui.o main.o
 default: $(TARGET)
 
 $(TARGET) : $(OBJECTS)
-	$(CC) $(OBJECTS) $(shell pkg-config --libs $(PKGS)) -o $@
+	$(CC) $(OBJECTS) $(shell pkg-config --libs $(PKGS)) $(LIBS) $(LDFLAGS) -o $@
 
 main.o: main.c
 	$(CC) -c $(CFLAGS) $(shell pkg-config --cflags $(PKGS)) main.c -o $@
