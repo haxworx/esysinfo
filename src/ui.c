@@ -1112,14 +1112,14 @@ _ui_process_panel_add(Evas_Object *parent, Ui *ui)
    elm_object_content_set(frame, list);
    evas_object_smart_callback_add(ui->list_pid, "selected", _process_panel_list_selected_cb, ui);
 
-   frame = elm_frame_add(box);
+   frame = elm_frame_add(hbox);
    evas_object_size_hint_weight_set(frame, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(frame, EVAS_HINT_FILL, EVAS_HINT_FILL);
    elm_object_text_set(frame, "Process Statistics");
    elm_box_pack_end(hbox, frame);
    evas_object_show(frame);
 
-   table = elm_table_add(parent);
+   table = elm_table_add(frame);
    evas_object_size_hint_weight_set(table, 0.5, EVAS_HINT_EXPAND);
    evas_object_size_hint_align_set(table, EVAS_HINT_FILL, EVAS_HINT_FILL);
    evas_object_show(table);
@@ -1131,6 +1131,7 @@ _ui_process_panel_add(Evas_Object *parent, Ui *ui)
    evas_object_show(scroller);
    elm_object_content_set(scroller, table);
    elm_object_content_set(frame, scroller);
+   elm_box_pack_end(hbox, frame);
 
    label = elm_label_add(parent);
    evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
