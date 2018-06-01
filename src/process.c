@@ -322,6 +322,8 @@ proc_info_by_pid(int pid)
           p->numthreads++;
      }
 
+   kvm_close(kern);
+
    return p;
 }
 
@@ -370,6 +372,8 @@ _process_list_openbsd_get(void)
                p->numthreads++;
           }
      }
+
+   kvm_close(kern);
 
    return list;
 }
