@@ -96,6 +96,7 @@ typedef struct Ui
 
    Sort_Type    sort_type;
    Eina_Bool    sort_reverse;
+   Eina_Bool    panel_visible;
 
 } Ui;
 

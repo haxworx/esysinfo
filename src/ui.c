@@ -555,28 +555,6 @@ _btn_about_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
 }
 
 static void
-_process_panel(void *data, Ecore_Thread *thread)
-{
-   Ui *ui;
-   int i;
-
-   ui = data;
-
-   while (1)
-     {
-        ecore_thread_feedback(thread, ui);
-
-        for (i = 0; i < 60 * 2; i++)
-          {
-             if (ecore_thread_check(thread))
-               return;
-
-             usleep(500000);
-          }
-     }
-}
-
-static void
 _list_item_del_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
 {
    pid_t *pid = data;
@@ -585,7 +563,7 @@ _list_item_del_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EIN
 }
 
 static void
-_process_panel_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
+_process_panel_pids_update(void *data, Ecore_Thread *thread, void *msg)
 {
    Proc_Stats *proc;
    Elm_Widget_Item *item;
@@ -593,6 +571,9 @@ _process_panel_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    pid_t *pid;
    Ui *ui = msg;
    char buf[64];
+
+   if (!ui->panel_visible)
+     return;
 
    // FIXME: something fishy going on here (mem-wise).
    list = proc_info_all_get();
@@ -634,7 +615,7 @@ _process_panel_update(void *data)
    proc = proc_info_by_pid(ui->selected_pid);
    if (!proc)
      {
-        _process_panel_feedback_cb(NULL, NULL, ui);
+        _process_panel_pids_update(NULL, NULL, ui);
 
         return ECORE_CALLBACK_CANCEL;
      }
@@ -705,6 +686,14 @@ _process_panel_list_selected_cb(void *data, Evas_Object *obj, void *event_info E
    ui->timer_pid = ecore_timer_add(ui->poll_delay, _process_panel_update, ui);
 
    elm_scroller_page_bring_in(ui->scroller, 0, 0);
+}
+
+static void
+_panel_scrolled_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+{
+   Ui *ui = data;
+
+   ui->panel_visible = !ui->panel_visible;
 }
 
 static void
@@ -793,6 +782,7 @@ _entry_pid_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info
    ui->timer_pid = ecore_timer_add(ui->poll_delay, _process_panel_update, ui);
 
    elm_panel_toggle(ui->panel);
+   ui->panel_visible = EINA_TRUE;
 }
 
 static void
@@ -1092,6 +1082,7 @@ _ui_process_panel_add(Evas_Object *parent, Ui *ui)
    elm_panel_toggle(panel);
    elm_object_content_set(parent, panel);
    evas_object_show(panel);
+   evas_object_smart_callback_add(ui->panel, "scroll", _panel_scrolled_cb, ui);
 
    hbox = elm_box_add(parent);
    evas_object_size_hint_weight_set(hbox, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -1389,6 +1380,7 @@ ui_add(Evas_Object *parent)
    ui->sort_type = SORT_BY_PID;
    ui->selected_pid = -1;
    ui->program_pid = getpid();
+   ui->panel_visible = EINA_TRUE;
 
    memset(ui->cpu_times, 0, PID_MAX * sizeof(int64_t));
 
@@ -1403,8 +1395,8 @@ ui_add(Evas_Object *parent)
    _ui_main_view_add(parent, ui);
    _ui_process_panel_add(parent, ui);
 
+   _process_panel_update(ui);
    ecore_thread_feedback_run(_system_stats, _system_stats_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
    ecore_thread_feedback_run(_system_process_list, _system_process_list_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
-   ecore_thread_feedback_run(_process_panel, _process_panel_feedback_cb, _thread_end_cb, _thread_error_cb, ui, EINA_FALSE);
 }
 
