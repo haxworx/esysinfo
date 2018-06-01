@@ -563,13 +563,12 @@ _list_item_del_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EIN
 }
 
 static void
-_process_panel_pids_update(void *data, Ecore_Thread *thread, void *msg)
+_process_panel_pids_update(Ui *ui)
 {
    Proc_Stats *proc;
    Elm_Widget_Item *item;
    Eina_List *list;
    pid_t *pid;
-   Ui *ui = msg;
    char buf[64];
 
    if (!ui->panel_visible)
@@ -615,7 +614,7 @@ _process_panel_update(void *data)
    proc = proc_info_by_pid(ui->selected_pid);
    if (!proc)
      {
-        _process_panel_pids_update(NULL, NULL, ui);
+        _process_panel_pids_update(ui);
 
         return ECORE_CALLBACK_CANCEL;
      }
