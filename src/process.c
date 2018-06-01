@@ -14,6 +14,7 @@
 # include <limits.h>
 # include <sys/proc.h>
 # include <sys/param.h>
+# include <sys/resource.h>
 #endif
 
 #if defined(__MacOS__)
@@ -307,7 +308,7 @@ proc_info_by_pid(int pid)
    p->cpu_id = kp->p_cpuid;
    snprintf(p->command, sizeof(p->command), "%s", kp->p_comm);
    p->state = _process_state_name(kp->p_stat);
-   p->cpu_time = kp->p_cpticks;
+   p->cpu_time = kp->p_uticks + kp->p_sticks + kp->p_iticks;
    p->mem_size = (kp->p_vm_tsize * pagesize) + (kp->p_vm_dsize * pagesize) + (kp->p_vm_ssize * pagesize);
    p->mem_rss = kp->p_vm_rssize * pagesize;
    p->priority = kp->p_priority - PZERO;
@@ -353,7 +354,7 @@ _process_list_openbsd_get(void)
         p->cpu_id = kp[i].p_cpuid;
         snprintf(p->command, sizeof(p->command), "%s", kp[i].p_comm);
         p->state = _process_state_name(kp[i].p_stat);
-        p->cpu_time = kp[i].p_cpticks;
+        p->cpu_time = kp[i].p_uticks + kp[i].p_sticks + kp[i].p_iticks;
         p->mem_size = (kp[i].p_vm_tsize * pagesize) + (kp[i].p_vm_dsize * pagesize) + (kp[i].p_vm_ssize * pagesize);
         p->mem_rss = kp[i].p_vm_rssize * pagesize;
         p->priority = kp[i].p_priority - PZERO;
