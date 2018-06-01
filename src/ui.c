@@ -217,7 +217,7 @@ _fields_append(Ui *ui, Proc_Stats *proc)
 }
 
 static void
-_fields_show(Ui *ui, Proc_Stats *proc)
+_fields_show(Ui *ui)
 {
    elm_object_text_set(ui->entry_pid, ui->fields[PROCESS_INFO_FIELD_PID]);
    elm_object_text_set(ui->entry_uid, ui->fields[PROCESS_INFO_FIELD_UID]);
@@ -340,7 +340,7 @@ _system_process_list_feedback_cb(void *data, Ecore_Thread *thread EINA_UNUSED, v
    if (list)
      eina_list_free(list);
 
-   _fields_show(ui, proc);
+   _fields_show(ui);
    _fields_clear(ui);
 
    eina_lock_release(&_lock);
@@ -566,7 +566,7 @@ _process_panel(void *data, Ecore_Thread *thread)
      {
         ecore_thread_feedback(thread, ui);
 
-        for (i = 0; i < 30 * 2; i++)
+        for (i = 0; i < 60 * 2; i++)
           {
              if (ecore_thread_check(thread))
                return;
@@ -594,7 +594,7 @@ _process_panel_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
    Ui *ui = msg;
    char buf[64];
 
-
+   // FIXME: something fishy going on here (mem-wise).
    list = proc_info_all_get();
    list = eina_list_sort(list, eina_list_count(list), _sort_by_pid);
 
@@ -612,6 +612,8 @@ _process_panel_feedback_cb(void *data, Ecore_Thread *thread, void *msg)
 
         free(proc);
      }
+
+   elm_list_go(ui->list_pid);
 
    if (list)
      eina_list_free(list);
